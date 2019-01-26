@@ -5,7 +5,7 @@ from skimage import io
 from skimage.measure import label
 import matplotlib.pyplot as plt
 from torch.autograd import Variable
-
+from model import *
 
 import torch
 import torch.nn as nn
