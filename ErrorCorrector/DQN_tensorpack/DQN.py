@@ -29,9 +29,9 @@ from CorrectorModule.corrector_utils import *
 UPDATE_FREQ = 4
 
 MEMORY_SIZE = 1e5
-INIT_MEMORY_SIZE = 1e6 / 20 
-STEPS_PER_EPOCH = 100000 // UPDATE_FREQ  # each epoch is 100k played frames
-TARGET_NET_UPDATE = 10000 // UPDATE_FREQ # update target network every 10k steps
+INIT_MEMORY_SIZE = 1e4 / 20 
+STEPS_PER_EPOCH = 1000 // UPDATE_FREQ  # each epoch is 100k played frames
+TARGET_NET_UPDATE = 100 // UPDATE_FREQ # update target network every 10k steps
 LEARNING_RATE = [(60, 4e-4), (100, 2e-4), (500, 5e-5)] 
 EXPLORATION = (0, 1), (1, 0.9), (10, 0.9), (20, 0.1), (320, 0.01) 
 
