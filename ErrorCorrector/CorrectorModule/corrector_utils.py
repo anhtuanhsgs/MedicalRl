@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 from CorrectorModule.models import FusionNet
+sys.path.append('../')
 
 IN_CH = 2
 OUT_CH = 1
