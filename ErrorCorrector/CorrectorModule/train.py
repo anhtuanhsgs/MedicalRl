@@ -27,7 +27,21 @@ def create_dir (directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-
+def get_cell_prob (lbl, dilation, erosion):
+    ESP = 1e-5
+    elevation_map = []
+    for img in lbl:
+        elevation_map += [sobel (img)]
+    elevation_map = np.array (elevation_map)
+    elevation_map = elevation_map > ESP
+    cell_prob = ((lbl > 0) ^ elevation_map) & (lbl > 0)
+    for i in range (len (cell_prob)):
+        for j in range (erosion):
+            cell_prob [i] = binary_erosion (cell_prob [i])
+    for i in range (len (cell_prob)):
+        for j in range (dilation):
+            cell_prob [i] = binary_dilation (cell_prob [i])
+    return np.array (cell_prob, dtype=np.uint8) * 255
 
 def get_data (path, args):
     train_path = natsorted (glob.glob(path + 'A/*.tif'))
@@ -44,6 +58,14 @@ def get_data (path, args):
         y_train = np.zeros_like (X_train)
     return X_train, y_train
 
+def prepare_dataset (model, args):
+    X_train, y_train = get_data (path='../Data/train/', args=args)
+    X_test, y_test = get_data (path='../Data/test/', args=args)
+    data = EMDataset ('train', X_train, y_train, args.size)
+    data_test = EMDataset ('test', X_test, y_test, args.size)
+    train_data = DataLoader (data, batch_size=args.batch_size, num_workers=0)
+    test_data = DataLoader (data_test, batch_size=4, num_workers=0)
+    return train_data, test_data
 
 def visual_log (raw_t, target_t, pred_t, logger, i_iter, log_set, hasTarget=True):
     raw = np.expand_dims (raw_t.detach ().cpu ().numpy()[:,0,:,:], 3)
