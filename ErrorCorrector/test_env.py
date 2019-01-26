@@ -24,7 +24,7 @@ env_config = {
     "spliter": spliter_FusionNet,
     "merger": merger_FusionNet,
     "cell_thres": int (255 * 0.5),
-    "T": 16,
+    "T": 4,
     "agent_out_shape": [1, 2, 2],
     "num_feature": 2,
     "num_action": 1 * 2 * 2,
