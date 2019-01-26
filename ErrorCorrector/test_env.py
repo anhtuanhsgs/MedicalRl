@@ -101,7 +101,7 @@ sum_score = 0
 while not done:
     
     obs_t = obs2tensor (obs)
-    value, logit, (hx, cx) = model ((Variable (obs_t)), (hx, cx))
+    value, logit, (hx, cx) = model ((Variable (obs_t), (hx, cx)))
     prob = F.softmax(logit, dim=1)
     log_prob = F.log_softmax(logit, dim=1)
     action = prob.max (1)[1].data.cpu ().numpy () [0]
