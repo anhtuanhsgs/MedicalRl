@@ -107,6 +107,7 @@ while not done:
     action = prob.max (1)[1].data.cpu ().numpy () [0]
 
     prob_np = prob.data.cpu ().numpy ()
+    print ("______________________________")
     print ("Prob: ")
     print (prob_np)
     # for i in range (env_config ['agent_out_shape'][1]):
@@ -130,6 +131,7 @@ while not done:
     tmp = np.concatenate (tmp, 1)
     print ("reward:", reward)
     print ("old_score:", env.old_score)
+    print ("done: ", done)
     plt.imshow (env.render ())
     plt.show ()
     sum_score += reward
