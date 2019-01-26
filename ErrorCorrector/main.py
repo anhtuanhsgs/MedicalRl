@@ -6,7 +6,7 @@ import torch
 import torch.multiprocessing as mp
 from environment import EM_env
 from utils import read_config
-from model import CNN
+from model import *
 from train import train
 from test import test
 from natsort import natsorted
@@ -14,6 +14,8 @@ from natsort import natsorted
 from Utils.img_aug_func import *
 from Utils.utils import *
 from skimage.measure import label
+from CorrectorModule.corrector_utils import *
+from shared_optim import SharedRMSprop, SharedAdam
 
 
 parser = argparse.ArgumentParser(description='A3C')
@@ -54,21 +56,21 @@ parser.add_argument(
 parser.add_argument(
     '--workers',
     type=int,
-    default=8,
+    default=4,
     metavar='W',
     help='how many training processes to use (default: 32)')
 
 parser.add_argument(
     '--num-steps',
     type=int,
-    default=5,
+    default=4,
     metavar='NS',
     help='number of forward steps in A3C (default: 20)')
 
 parser.add_argument(
     '--max-episode-length',
     type=int,
-    default=25,
+    default=16,
     metavar='M',
     help='maximum length of an episode (default: 10000)')
 
@@ -110,6 +112,12 @@ parser.add_argument(
     help='GPUs to use [-1 CPU only] (default: -1)')
 
 parser.add_argument(
+    '--env-gpu',
+    type=int,
+    default=0,
+    help='GPUs to use [-1 CPU only] (default: -1)')
+
+parser.add_argument(
     '--amsgrad',
     default=True,
     metavar='AM',
@@ -118,35 +126,63 @@ parser.add_argument(
 parser.add_argument(
     '--save-period',
     type=int,
-    default=200,
-    metavar='AM',
+    default=50,
+    metavar='SP',
     help='Adam optimizer amsgrad parameter')
 
 parser.add_argument(
     '--log-period',
     type=int,
-    default=5,
-    metavar='AM',
+    default=10,
+    metavar='LP',
     help='Adam optimizer amsgrad parameter')
 
-def spliter (raw, prob):
-    ret = (prob > (255 * 0.85)).astype (np.float32) * 255.0
-    return ret
+parser.add_argument (
+    '--spliter',
+    default='Thres',
+    metavar='SPL',
+    choices=['FusionNet', 'Thres'])
 
-def merger (raw, prob):
-    ret = (prob > (255 * 0.55)).astype (np.float32) * 255.0
-    return ret
+parser.add_argument (
+    '--merger',
+    default='Thres',
+    metavar='MER',
+    choices=['FusionNet', 'Thres'])
+
+parser.add_argument(
+    '--shared-optimizer',
+    default=False,
+    metavar='SO',
+    help='use an optimizer without shared statistics.')
+
+parser.add_argument (
+    '--hidden-feat',
+    type=int,
+    default=512,
+    metavar='HF')
 
 def setup_env_conf (args):
+    if args.merger == 'FusionNet':
+        merger = merger_FusionNet
+    else:
+        merger = merger_thres
+
+    if args.spliter == 'FusionNet':
+        spliter = spliter_FusionNet
+    else:
+        spliter = spliter_thres
+
     env_conf = {
-        "corrector_size": [128, 128], 
+        "corrector_size": [96, 96], 
         "spliter": spliter,
         "merger": merger,
-        "cell_thres": int (255 * 0.7),
-        "T": 10,
-        "agent_out_shape": [2, 16, 16],
-        "num_feature": 3,
-        "num_action": 2
+        "cell_thres": int (255 * 0.5),
+        "T": args.max_episode_length,
+        "agent_out_shape": [1, 8, 8],
+        "num_feature": 6,
+        "num_action": 1 * 8 * 8,
+        "observation_shape": [6, 256, 256],
+        "env_gpu": args.env_gpu
     }
     return env_conf
 
@@ -167,10 +203,17 @@ def get_data (path, args):
 def setup_data (env_conf):
     raw , gt_lbl = get_data (path='Data/train/', args=None)
     prob = io.imread ('Data/train-membranes-idsia.tif')
+    ##################################
+    # prob = np.zeros_like (prob)
+    ##################################
     lbl = []
     for img in prob:
         lbl += [label (img > env_conf ['cell_thres'])]
     lbl = np.array (lbl)
+    raw = raw [:1]
+    lbl = lbl [:1]
+    prob = prob [:1]
+    gt_lbl = gt_lbl [:1] 
     return raw, lbl, prob, gt_lbl
 
 if __name__ == '__main__':
@@ -185,8 +228,9 @@ if __name__ == '__main__':
     env_conf = setup_env_conf (args)
     raw, lbl, prob, gt_lbl = setup_data (env_conf)
 
-    env =EM_env (raw, lbl, prob, env_conf, 'train', gt_lbl)
-    shared_model = CNN (env.observation_space.shape, env_conf["num_action"])
+    # env =EM_env (raw, lbl, prob, env_conf, 'train', gt_lbl)
+    shared_model = A3Clstm (env_conf ["observation_shape"], 
+                        env_conf["num_action"], args.hidden_feat)
 
     if args.load:
         saved_state = torch.load(
@@ -194,22 +238,31 @@ if __name__ == '__main__':
             map_location=lambda storage, loc: storage)
         shared_model.load_state_dict(saved_state)
     shared_model.share_memory()
-
     
-    optimizer = None
+    if args.shared_optimizer:
+        if args.optimizer == 'RMSprop':
+            optimizer = SharedRMSprop(shared_model.parameters(), lr=args.lr)
+        if args.optimizer == 'Adam':
+            optimizer = SharedAdam(
+                shared_model.parameters(), lr=args.lr, amsgrad=args.amsgrad)
+        optimizer.share_memory()
+    else:
+        optimizer = None
 
     processes = []
 
     p = mp.Process(target=test, args=(args, shared_model, env_conf, [raw, lbl, prob, gt_lbl]))
     p.start()
     processes.append(p)
-    time.sleep(0.1)
+    time.sleep(1)
+
     for rank in range(0, args.workers):
         p = mp.Process(
             target=train, args=(rank, args, shared_model, optimizer, env_conf, [raw, lbl, prob, gt_lbl]))
         p.start()
         processes.append(p)
-        time.sleep(0.1)
+        time.sleep(1)
+
     for p in processes:
         time.sleep(0.1)
         p.join()

@@ -3,7 +3,7 @@ from setproctitle import setproctitle as ptitle
 import torch
 from environment import EM_env
 from utils import setup_logger
-from model import CNN
+from model import *
 from player_util import Agent
 from torch.autograd import Variable
 import time
@@ -42,7 +42,7 @@ def test (args, shared_model, env_conf, datasets):
 
     player = Agent (None, env, args, None)
     player.gpu_id = gpu_id
-    player.model = CNN (env.observation_space.shape, env_conf["num_action"])
+    player.model = A3Clstm (env.observation_space.shape, env_conf["num_action"], args.hidden_feat)
     player.state = player.env.reset ()
     player.state = torch.from_numpy (player.state).float ()
     if gpu_id >= 0:
@@ -61,8 +61,7 @@ def test (args, shared_model, env_conf, datasets):
     while True:
         if flag:
             if gpu_id >= 0:
-                with torch.cuda.device (gpu_id):
-                    player.model.load_state_dict (shared_model.state_dict ())
+                with torch.cuda.device (gpu_id):                    player.model.load_state_dict (shared_model.state_dict ())
             else:
                 player.model.load_state_dict (shared_model.state_dict ())
             player.model.eval ()
@@ -107,11 +106,17 @@ def test (args, shared_model, env_conf, datasets):
                         torch.save (state_to_save, '{0}{1}.dat'.format (args.save_model_dir, args.env + '_' + str (num_tests)))
 
             if num_tests % args.log_period == 0:
+                print ("------------------------------------------------")
+                print ("Log test #:", num_tests)
+                print ("Actions :", player.actions)
+                print ("Actions transformed: ")
                 print (player.actions_explained)
+                print ("rewards: ", player.rewards)
+                print ("sum rewards: ", reward_sum)
+                print ("------------------------------------------------")
                 log_img = np.concatenate (renderlist, 0)
                 log_info = {"traning_sample": log_img}
                 for tag, img in log_info.items ():
-                    img = np.repeat (np.expand_dims (img, -1), 3, -1)
                     img = img [None]
                     logger.image_summary (tag, img, num_tests)
 
@@ -123,13 +128,13 @@ def test (args, shared_model, env_conf, datasets):
             reward_sum = 0
             player.eps_len = 0
             state = player.env.reset ()
-            player.eps_len += 2
-            time.sleep (10)
+            time.sleep (60)
             player.stage = torch.from_numpy (state).float ()
             player.clear_actions ()
             if gpu_id >= 0:
                 with torch.cuda.device (gpu_id):
                     player.state = player.state.cuda ()
+
 
 
 
