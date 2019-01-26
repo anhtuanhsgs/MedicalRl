@@ -29,9 +29,9 @@ from CorrectorModule.corrector_utils import *
 UPDATE_FREQ = 4
 
 MEMORY_SIZE = 1e5
-INIT_MEMORY_SIZE = 1e4 / 20 
-STEPS_PER_EPOCH = 1000 // UPDATE_FREQ  # each epoch is 100k played frames
-TARGET_NET_UPDATE = 100 // UPDATE_FREQ # update target network every 10k steps
+INIT_MEMORY_SIZE = 1e5 / 20 
+STEPS_PER_EPOCH = 10000 // UPDATE_FREQ  # each epoch is 100k played frames
+TARGET_NET_UPDATE = 1000 // UPDATE_FREQ # update target network every 10k steps
 LEARNING_RATE = [(60, 4e-4), (100, 2e-4), (500, 5e-5)] 
 EXPLORATION = (0, 1), (1, 0.9), (10, 0.9), (20, 0.1), (320, 0.01) 
 
@@ -152,31 +152,49 @@ class Model(DQNModel):
 
     def _get_DQN_prediction(self, image):
 
-        DEPTH = 50
-        CFG = {
-            50: ([3, 4, 6, 3]),
-            101: ([3, 4, 23, 3]),
-            152: ([3, 8, 36, 3])
-        }
-        blocks = CFG[DEPTH]
+        l = (LinearWrap(image)
+             # Nature architecture
+             # .Conv2D('conv0', 32, 8, strides=4)
+             # .Conv2D('conv1', 64, 4, strides=2)
+             # .Conv2D('conv2', 64, 3)
 
-        image = image
-        image = tf.pad(image, [[0, 0], [3, 2], [3, 2], [0, 0]])
-        image = tf.transpose(image, [0, 3, 1, 2])
-        bottleneck = functools.partial(resnet_bottleneck, stride_first=True)
-        with argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm],
-                      data_format='channels_first'), \
-                argscope(Conv2D, use_bias=False):
-            l = (LinearWrap(image)
-                      .Conv2D('conv0', 64, 7, strides=2, activation=BNReLU, padding='VALID')
-                      .MaxPooling('pool0', 3, strides=2, padding='SAME') ())
-            l = resnet_group ('group0', l, bottleneck, 64, blocks[0], 1)
-            l = resnet_group ('group1', l, bottleneck, 128, blocks[1], 2)
-            l = resnet_group ('group2', l, bottleneck, 256, blocks[2], 2)
-            l = resnet_group ('group3', l, bottleneck, 512, blocks[3], 2)
-            l = (LinearWrap(l)          
-                      .GlobalAvgPooling('gap')
-                      .FullyConnected('linear', 1000)())
+             # architecture used for the figure in the README, slower but takes fewer iterations to converge
+             .Conv2D('conv0', out_channel=32, kernel_shape=5)
+             .MaxPooling('pool0', 2)
+             .Conv2D('conv1', out_channel=32, kernel_shape=5)
+             .MaxPooling('pool1', 2)
+             .Conv2D('conv2', out_channel=64, kernel_shape=4)
+             .MaxPooling('pool2', 2)
+             .Conv2D('conv3', out_channel=64, kernel_shape=3)
+
+             .FullyConnected('fc0', 512)
+             .tf.nn.leaky_relu(alpha=0.01)())
+
+        # DEPTH = 50
+        # CFG = {
+        #     50: ([3, 4, 6, 3]),
+        #     101: ([3, 4, 23, 3]),
+        #     152: ([3, 8, 36, 3])
+        # }
+        # blocks = CFG[DEPTH]
+
+        # image = image
+        # image = tf.pad(image, [[0, 0], [3, 2], [3, 2], [0, 0]])
+        # image = tf.transpose(image, [0, 3, 1, 2])
+        # bottleneck = functools.partial(resnet_bottleneck, stride_first=True)
+        # with argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm],
+        #               data_format='channels_first'), \
+        #         argscope(Conv2D, use_bias=False):
+        #     l = (LinearWrap(image)
+        #               .Conv2D('conv0', 64, 7, strides=2, activation=BNReLU, padding='VALID')
+        #               .MaxPooling('pool0', 3, strides=2, padding='SAME') ())
+        #     l = resnet_group ('group0', l, bottleneck, 64, blocks[0], 1)
+        #     l = resnet_group ('group1', l, bottleneck, 128, blocks[1], 2)
+        #     l = resnet_group ('group2', l, bottleneck, 256, blocks[2], 2)
+        #     l = resnet_group ('group3', l, bottleneck, 512, blocks[3], 2)
+        #     l = (LinearWrap(l)          
+        #               .GlobalAvgPooling('gap')
+        #               .FullyConnected('linear', 1000)())
 
         if self.method != 'Dueling':
             Q = FullyConnected('fct', l, self.num_actions)
