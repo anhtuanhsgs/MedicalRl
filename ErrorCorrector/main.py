@@ -179,9 +179,9 @@ def setup_env_conf (args):
         "cell_thres": int (255 * 0.5),
         "T": args.max_episode_length,
         "agent_out_shape": [1, 2, 2],
-        "num_feature": 6,
+        "num_feature": 2,
         "num_action": 1 * 2 * 2,
-        "observation_shape": [6, 256, 256],
+        "observation_shape": [2, 256, 256],
         "env_gpu": args.env_gpu
     }
     return env_conf

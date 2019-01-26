@@ -169,9 +169,9 @@ class EM_env (gym.Env):
         lbl = np.repeat (np.zeros_like (self.lbl) [None], 3, 0)
         obs = np.concatenate ([
                 self.raw [None],
-                lbl,
+                # lbl,
                 self.prob [None],
-                self.info_mask [None]
+                # self.info_mask [None]
             ], 0)
         if self.obs_format == "CHW":
             return obs.astype (np.float32) / 255.0
