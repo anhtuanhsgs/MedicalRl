@@ -24,6 +24,9 @@ def get_data (path, args):
 def setup_data (env_conf):
     raw , gt_lbl = get_data (path='../Data/train/', args=None)
     prob = io.imread ('../Data/train-membranes-idsia.tif')
+    ################################
+    prob = np.zeros_like (prob)
+    ################################
     lbl = []
     for img in prob:
         lbl += [label (img > env_conf ['cell_thres'])]

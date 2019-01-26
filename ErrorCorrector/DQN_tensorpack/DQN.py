@@ -66,13 +66,13 @@ parser.add_argument ('--algo',
 
 parser.add_argument (
     '--spliter',
-    default='Thres',
+    default='FusionNet',
     metavar='SPL',
     choices=['FusionNet', 'Thres'])
 
 parser.add_argument (
     '--merger',
-    default='Thres',
+    default='FusionNet',
     metavar='MER',
     choices=['FusionNet', 'Thres'])
 
@@ -122,12 +122,12 @@ def setup_env_conf (args):
         spliter = spliter_thres
 
     env_conf = {
-        "corrector_size": [96, 96], 
+        "corrector_size": [128, 128], 
         "spliter": spliter,
         "merger": merger,
         "cell_thres": int (255 * 0.5),
         "T": args.max_episode_length,
-        "agent_out_shape": [1, 8, 8],
+        "agent_out_shape": [1, 2, 2],
         "num_feature": 6,
         "num_action": 2,
         "observation_shape": [256, 256, 6],
