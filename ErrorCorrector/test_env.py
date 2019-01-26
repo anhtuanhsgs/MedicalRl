@@ -21,8 +21,8 @@ FEATURES = [16, 32, 64, 128]
 gpu_id = 0
 env_config = {
     "corrector_size": [96, 96], 
-    "spliter": spliter_thres,
-    "merger": merger_thres,
+    "spliter": spliter_FusionNet,
+    "merger": merger_FusionNet,
     "cell_thres": int (255 * 0.5),
     "T": 16,
     "agent_out_shape": [1, 2, 2],
