@@ -204,7 +204,8 @@ class EM_env (gym.Env):
         new_label = label (self.prob > self.cell_thres, background=0).astype (np.int32)
         if self.type == 'train':
             new_score = self.metric (self.gt_lbl, new_label)
-            reward = (new_score - self.old_score) * 10
+            # reward = (new_score - self.old_score) * 10
+            reward = 0
             self.old_score = new_score
             # print ('current score:', self.old_score)
         else:
@@ -215,7 +216,8 @@ class EM_env (gym.Env):
 
 
         if (self.step_cnt >= self.T):
-            reward += self.old_score * 10
+            # reward += self.old_score * 10
+            reward = self.old_score
             done = True
         else:
             done = False
