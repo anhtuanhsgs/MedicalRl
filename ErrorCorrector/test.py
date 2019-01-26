@@ -1,7 +1,7 @@
 from __future__ import division
 from setproctitle import setproctitle as ptitle
 import torch
-from environment import EM_env
+from environment import *
 from utils import setup_logger
 from model import *
 from player_util import Agent

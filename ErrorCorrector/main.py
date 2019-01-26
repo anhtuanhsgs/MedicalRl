@@ -4,7 +4,7 @@ os.environ["OMP_NUM_THREADS"] = "1"
 import argparse
 import torch
 import torch.multiprocessing as mp
-from environment import EM_env
+from environment import *
 from utils import read_config
 from model import *
 from train import train
