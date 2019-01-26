@@ -204,7 +204,7 @@ def setup_data (env_conf):
     raw , gt_lbl = get_data (path='Data/train/', args=None)
     prob = io.imread ('Data/train-membranes-idsia.tif')
     ##################################
-    # prob = np.zeros_like (prob)
+    prob = np.zeros_like (prob)
     ##################################
     lbl = []
     for img in prob:
@@ -214,6 +214,7 @@ def setup_data (env_conf):
     lbl = lbl [:1]
     prob = prob [:1]
     gt_lbl = gt_lbl [:1] 
+
     return raw, lbl, prob, gt_lbl
 
 if __name__ == '__main__':
