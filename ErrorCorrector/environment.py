@@ -238,7 +238,7 @@ class EM_env (gym.Env):
                 prob,
                 lbl,
                 gt_lbl,
-                info_mask
+                # info_mask
             ], 1)
 
         return ret
