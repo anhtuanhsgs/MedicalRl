@@ -12,8 +12,6 @@ from Utils.Logger import Logger
 from Utils.utils import *
 import numpy as np
 
-
-
 def test (args, shared_model, env_conf, datasets):
     ptitle ('Test agent')
     gpu_id = args.gpu_ids [-1]
@@ -61,7 +59,8 @@ def test (args, shared_model, env_conf, datasets):
     while True:
         if flag:
             if gpu_id >= 0:
-                with torch.cuda.device (gpu_id):                    player.model.load_state_dict (shared_model.state_dict ())
+                with torch.cuda.device (gpu_id):                    
+                    player.model.load_state_dict (shared_model.state_dict ())
             else:
                 player.model.load_state_dict (shared_model.state_dict ())
             player.model.eval ()

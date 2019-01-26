@@ -81,14 +81,16 @@ else:
     cx = Variable(torch.zeros(1, 512))
     hx = Variable(torch.zeros(1, 512))
 
-print ("old_score", env.old_score)
-plt.imshow (env.render ())
-plt.show ()
-cnt = 0
+
 
 
 done = False
 obs = env.reset ()
+
+print ("old_score", env.old_score)
+plt.imshow (env.render ())
+plt.show ()
+cnt = 0
 
 for i in range (env.agent_out_shape [1]):
     for j in range (env.agent_out_shape [2]):
