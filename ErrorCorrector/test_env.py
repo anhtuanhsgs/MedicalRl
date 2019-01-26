@@ -4,6 +4,8 @@ from natsort import natsorted
 from skimage import io
 from skimage.measure import label
 import matplotlib.pyplot as plt
+from torch.autograd import Variable
+
 
 import torch
 import torch.nn as nn
@@ -73,11 +75,11 @@ env = EM_env (raw, lbl, prob, env_config, 'train', gt_lbl)
 
 
 if gpu_id >= 0:
-    cx = Variable(torch.zeros(1, args.hidden_feat).cuda())
-    hx = Variable(torch.zeros(1, args.hidden_feat).cuda())
+    cx = Variable(torch.zeros(1, 512).cuda())
+    hx = Variable(torch.zeros(1, 512).cuda())
 else:
-    cx = Variable(torch.zeros(1, args.hidden_feat))
-    hx = Variable(torch.zeros(1, args.hidden_feat))
+    cx = Variable(torch.zeros(1, 512))
+    hx = Variable(torch.zeros(1, 512))
 
 print ("old_score", env.old_score)
 plt.imshow (env.render ())
