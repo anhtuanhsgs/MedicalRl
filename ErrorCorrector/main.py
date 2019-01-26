@@ -139,13 +139,13 @@ parser.add_argument(
 
 parser.add_argument (
     '--spliter',
-    default='Thres',
+    default='FusionNet',
     metavar='SPL',
     choices=['FusionNet', 'Thres'])
 
 parser.add_argument (
     '--merger',
-    default='Thres',
+    default='FusionNet',
     metavar='MER',
     choices=['FusionNet', 'Thres'])
 
