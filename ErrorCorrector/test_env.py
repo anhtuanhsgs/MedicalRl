@@ -20,7 +20,7 @@ FEATURES = [16, 32, 64, 128]
 
 gpu_id = 0
 env_config = {
-    "corrector_size": [128, 128], 
+    "corrector_size": [160, 160], 
     "spliter": spliter_FusionNet,
     "merger": merger_FusionNet,
     "cell_thres": int (255 * 0.5),
