@@ -81,9 +81,6 @@ else:
     cx = Variable(torch.zeros(1, 512))
     hx = Variable(torch.zeros(1, 512))
 
-
-
-
 done = False
 obs = env.reset ()
 
@@ -98,7 +95,7 @@ for i in range (env.agent_out_shape [1]):
         cnt += 1
     print ()
 
-model = setup_rl_model ()
+model = setup_rl_model (env, env_config)
 
 sum_score = 0
 while not done:
