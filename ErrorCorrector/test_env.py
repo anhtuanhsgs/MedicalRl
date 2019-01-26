@@ -63,11 +63,11 @@ prob = io.imread ('Data/train-membranes-idsia.tif')
 raw = raw [:1]
 gt_lbl = gt_lbl [:1]
 prob = prob [:1]
+prob = np.zeros_like (prob)
 lbl = []
 for img in prob:
     lbl += [label (img > env_config ['cell_thres'])]
 lbl = np.array (lbl)
-lbl = np.zeros_like (lbl)
 #---------------------DATA-----------------------------
 
 
@@ -107,10 +107,12 @@ while not done:
     action = prob.max (1)[1].data.cpu ().numpy () [0]
 
     prob_np = prob.data.cpu ().numpy ()
-    for i in range (env_config ['agent_out_shape'][1]):
-        for j in range (env_config ['agent_out_shape'][2]):
-            print ("{0:.3f}".format (prob_np [i,j]), end='\t')
-        print ()
+    print ("Prob: ")
+    print (prob_np)
+    # for i in range (env_config ['agent_out_shape'][1]):
+    #     for j in range (env_config ['agent_out_shape'][2]):
+    #         print ("{:.3f}".format (prob_np [i,j]), end='\t')
+    #     print ()
 
 
     action_index = env.int2index (action, env.agent_out_shape)
