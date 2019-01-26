@@ -164,8 +164,9 @@ class EM_env (gym.Env):
         return vf (lbl)
 
     def observation (self):
-        lbl = (self.lbl * self.max_lbl / 255.0).astype (np.int32)
-        lbl = np.transpose (lbl2rgb (lbl), [2, 0, 1])
+        # lbl = (self.lbl * self.max_lbl / 255.0).astype (np.int32)
+        # lbl = np.transpose (lbl2rgb (lbl), [2, 0, 1])
+        lbl = np.expand_dims (self.zeros_like (raw) [None], 3, 0)
         obs = np.concatenate ([
                 self.raw [None],
                 lbl,
