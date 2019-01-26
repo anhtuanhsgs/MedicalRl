@@ -31,4 +31,12 @@ def setup_data (env_conf):
     for img in prob:
         lbl += [label (img > env_conf ['cell_thres'])]
     lbl = np.array (lbl)
+
+    ################################
+    raw = raw [:1]
+    lbl = lbl [:1]
+    prob = prob [:1]
+    gt_lbl = gt_lbl [:1]
+    ################################
+
     return raw, lbl, prob, gt_lbl

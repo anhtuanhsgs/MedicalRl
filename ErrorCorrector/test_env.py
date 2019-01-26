@@ -16,17 +16,18 @@ IN_CH = 2
 OUT_CH = 1
 FEATURES = [16, 32, 64, 128]
 
+gpu_id = 0
 env_config = {
     "corrector_size": [96, 96], 
     "spliter": spliter_thres,
     "merger": merger_thres,
     "cell_thres": int (255 * 0.5),
     "T": 16,
-    "agent_out_shape": [2, 8, 8],
+    "agent_out_shape": [1, 2, 2],
     "num_feature": 6,
-    "num_action": 2 * 8 * 8,
+    "num_action": 1 * 2 * 2,
     "observation_shape": [6, 256, 256],
-    "env_gpu": 3
+    "env_gpu": gpu_id
 }
 
 def get_data (path, args):
@@ -43,55 +44,81 @@ def get_data (path, args):
         y_train = np.zeros_like (X_train)
     return X_train, y_train
 
+def obs2tensor (obs):
+    ret = obs [None]
+    if gpu_id >= 0:
+        ret = torch.tensor (ret, dtype=torch.float32).cuda ()
+    return ret
 
+def setup_rl_model (env, env_conf):
+    model = A3Clstm (env.observation_space.shape, env_conf["num_action"], 512)
+    if gpu_id >= 0:
+        model = model.cuda ()
+    return model
+#---------------------DATA-----------------------------
 raw , gt_lbl = get_data (path='Data/train/', args=None)
 prob = io.imread ('Data/train-membranes-idsia.tif')
-
-raw = raw [:10]
-gt_lbl = gt_lbl [:10]
-prob = prob [:10]
-
-# print ('test rand_score:', rand_score (gt_lbl [0], gt_lbl [0]))
-
-# prob_r = []
-# for img in raw:
-#     prob_r += [spliter2 (img, None)]
-# prob_r = np.array (prob_r)
-# prob = prob_r
-# tmp = spliter2 (raw[1], None)
-# plt.imshow (tmp)
-# plt.show ()
-
+raw = raw [:1]
+gt_lbl = gt_lbl [:1]
+prob = prob [:1]
 lbl = []
 for img in prob:
     lbl += [label (img > env_config ['cell_thres'])]
 lbl = np.array (lbl)
+lbl = np.zeros_like (lbl)
+#---------------------DATA-----------------------------
+
+
 env = EM_env (raw, lbl, prob, env_config, 'train', gt_lbl)
 
-done = False
-obs = env.reset ()
+
+if gpu_id >= 0:
+    cx = Variable(torch.zeros(1, args.hidden_feat).cuda())
+    hx = Variable(torch.zeros(1, args.hidden_feat).cuda())
+else:
+    cx = Variable(torch.zeros(1, args.hidden_feat))
+    hx = Variable(torch.zeros(1, args.hidden_feat))
 
 print ("old_score", env.old_score)
 plt.imshow (env.render ())
 plt.show ()
 cnt = 0
+
+
+done = False
+obs = env.reset ()
+
 for i in range (env.agent_out_shape [1]):
     for j in range (env.agent_out_shape [2]):
         print (str (cnt), end='\t', flush=True)
         cnt += 1
     print ()
 
+model = setup_rl_model ()
+
 sum_score = 0
 while not done:
-    action = int (input ('a = '))
+    
+    obs_t = obs2tensor (obs)
+    value, logit, (hx, cx) = model ((Variable (obs)), (hx, cx))
+    prob = F.softmax(logit, dim=1)
+    log_prob = F.log_softmax(logit, dim=1)
+    action = prob.max (1)[1].data.cpu ().numpy () [0]
+
+    prob_np = prob.data.cpu ().numpy ()
+    for i in range (env_config ['agent_out_shape'][1]):
+        for j in range (env_config ['agent_out_shape'][2]):
+            print ("{0:.3f}".format (prob_np [i,j]), end='\t')
+        print ()
+
 
     action_index = env.int2index (action, env.agent_out_shape)
     error_index = env.index2validrange (action_index [1:], env.agent_out_shape [1:])
-    print ("action index", action_index)
-    print ("error index", error_index)
+    print ("action: ", action)
+    print ("action index: ", action_index)
+    print ("error index: ", error_index)
 
     cnt = 0
-    
     
     obs, reward, done, info = env.step (action)
     tmp = []
