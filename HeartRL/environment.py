@@ -12,8 +12,6 @@ from img_aug_func import *
 import copy
 import math
 
-HISTORY = 6
-
 def get_center (lbl_img):
 	ske = skeletonize (lbl_img == 255)
 	index_list = np.where (ske)
@@ -145,7 +143,7 @@ class Environment:
 			state.start [0] += state.size [0]
 			state.start [1] += state.size [1]
 
-		if state.size [0] < 8 or state.size[1] < 8:
+		if state.size [0] < 32 or state.size[1] < 32:
 			state.done = True
 			info = {
 				'ale.lives': 0
@@ -233,7 +231,7 @@ class Environment:
 
 			# print len (mask_list)
 
-			while (len (mask_list) != HISTORY):
+			while (len (mask_list) != 4):
 				mask_list += [np.zeros_like (self.raw)]
 
 			return mask_list
