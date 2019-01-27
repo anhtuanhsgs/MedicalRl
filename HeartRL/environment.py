@@ -260,7 +260,7 @@ class Environment:
 		for i in range (len (mask_list)):
 			mask_list[i] = np.expand_dims (mask_list[i], -1)
 		
-		ret = np.concatenate ([raw] + mask_list, -1)
+		ret = np.concatenate ([raw] + mask_list [len (action_his) - 1], -1)
 		ret = ret.astype (np.uint8)
 		return ret
 

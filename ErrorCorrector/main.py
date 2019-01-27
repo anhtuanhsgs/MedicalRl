@@ -70,7 +70,7 @@ parser.add_argument(
 parser.add_argument(
     '--max-episode-length',
     type=int,
-    default=4,
+    default=41234,
     metavar='M',
     help='maximum length of an episode (default: 10000)')
 

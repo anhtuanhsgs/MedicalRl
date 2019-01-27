@@ -27,7 +27,7 @@ BATCH_SIZE = 16
 
 IMAGE_SIZE = (256, 256)
 # IMAGE_CHANNEL = None  # 3 in gym and 1 in our own wrapper
-IMAGE_CHANNEL = 5
+IMAGE_CHANNEL = 2
 FRAME_HISTORY = 1
 ACTION_REPEAT = 1   # aka FRAME_SKIP
 
