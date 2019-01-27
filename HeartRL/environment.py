@@ -262,7 +262,7 @@ class Environment:
 		current_iteration = len (self.state.action_his) - 1;
 		if (current_iteration < 0):
 			current_iteration = 0
-		ret = np.concatenate ([raw] + mask_list [current_iteration], -1)
+		ret = np.concatenate ([raw] + [mask_list [current_iteration]], -1)
 		ret = ret.astype (np.uint8)
 		return ret
 
