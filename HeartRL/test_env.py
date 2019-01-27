@@ -30,7 +30,7 @@ tmp = player.reset ()
 
 def show (obs):
     tmp = []
-    for i in range (5):
+    for i in range (2):
         tmp += [obs[...,i]]
     img= np.concatenate (tmp, 1)
     plt.imshow (img, cmap='gray')
