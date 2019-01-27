@@ -37,6 +37,7 @@ def show (obs):
     plt.show ()
 
 obs, reward, done, info = player.step (2)
+print (obs.shape)
 show (obs)
 obs, reward, done, info = player.step (3)
 show (obs)
