@@ -34,6 +34,7 @@ cnt = 0
 for i in range (agent_out_shape [1]):
     for j in range (agent_out_shape [2]):
         print (cnt, end='\t')
+        cnt += 1
     print ()
 
 def show (obs):
