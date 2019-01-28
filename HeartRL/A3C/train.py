@@ -102,7 +102,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
 
         if gpu_id >= 0:
             with torch.cuda.device (gpu_id):
-            player.values.append(Variable(R).cuda ())
+                player.values.append(Variable(R).cuda ())
         else:
             player.values.append(Variable(R))
 
