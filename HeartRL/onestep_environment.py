@@ -82,7 +82,7 @@ class Environment:
         self.raw_list = raw_list
         self.lbl_list = lbl_list
 
-        self.observation_shape = (256, 256)
+        self.observation_shape = (1, 256, 256)
         self.local_wd_size = (45, 45)
         self.agent_out_shape = (1, 6, 6)
         self.valid_range = [
