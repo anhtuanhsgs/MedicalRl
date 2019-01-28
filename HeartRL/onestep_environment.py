@@ -120,6 +120,9 @@ class Environment:
         action_index = self.int2index (action, self.agent_out_shape)
         center_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
 
+        print (action_index)
+        print (center_index)
+
         state.start = [center_index [0] - self.local_wd_size [0] // 2, center_index [1] - self.local_wd_size [0] // 2]
         state.size = self.local_wd_size
         reward = (max_dist - distance (center_index, state.target)) / max_dist * max_reward
@@ -144,7 +147,6 @@ class Environment:
         mov_dist = (np.random.randint (-max_mov_dist, max_mov_dist + 1), 
             np.random.randint (-max_mov_dist, max_mov_dist + 1))
         self.target [0] -= mov_dist[0]; self.target[1] -= mov_dist[1]
-        print ("target: ", self.target)
         self.state = State (0, [0, 0], self.raw.shape, img_id, self.target, mov_dist)
         self.cur_dist = distance (self.get_cen (), self.target)
         return self.observation ()
@@ -201,9 +203,6 @@ class Environment:
         log_img = np.expand_dims (log_img, 0)
         log_img = self.get_boundary_mask (log_img, log_img_pad).astype (np.uint8)
         target = self.get_state ().target
-
-        print ("target: ", target)
-        print ("dist: ", self.state.mov_dist)
 
         # Draw center, target
         dxs = [-1, -1, -1, 0, 0,  0, 1, 1,  1]
