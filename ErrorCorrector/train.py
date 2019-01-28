@@ -104,17 +104,6 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
         value_loss = 0
         gae = torch.zeros(1, 1)
 
-        if gpu_id >= 0:
-            with torch.cuda.device (gpu_id):
-                R = R.cuda ()
-
-        player.values.append (Variable (R))
-        policy_loss = 0
-        value_loss = 0
-        gae = torch.zeros (1, 1)
-        if gpu_id >= 0:
-            with torch.cuda.device (gpu_id):
-                gae = gae.cuda ()
         R = Variable (R)
         for i in reversed(range(len(player.rewards))):
             R = args.gamma * R + player.rewards[i]
