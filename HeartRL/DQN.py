@@ -27,7 +27,7 @@ BATCH_SIZE = 16
 
 IMAGE_SIZE = (256, 256)
 # IMAGE_CHANNEL = None  # 3 in gym and 1 in our own wrapper
-IMAGE_CHANNEL = 2
+IMAGE_CHANNEL = 1
 FRAME_HISTORY = 1
 ACTION_REPEAT = 1   # aka FRAME_SKIP
 
@@ -207,7 +207,7 @@ if __name__ == '__main__':
     METHOD = args.algo
     # set num_actions
     # NUM_ACTIONS = get_player().action_space.n
-    NUM_ACTIONS = 5
+    NUM_ACTIONS = np.prod (get_player ().agent_out_shape)
     logger.info("ENV: {}, Num Actions: {}".format(ENV_NAME, NUM_ACTIONS))
 
     raw_list, lbl_list = init_data ()
