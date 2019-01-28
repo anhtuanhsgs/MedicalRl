@@ -102,7 +102,7 @@ class Environment:
     def index2validrange (self, idx, size):
         idx_ret = []
         for i in range (len (idx)):
-            idx_ret += [int (idx[i] / (size [i] - 1) * (self.valid_range [i][1] - self.valid_range [i][0]) + self.valid_range [i][0])]
+            idx_ret += [int (1.0 * idx[i] / (size [i] - 1) * (self.valid_range [i][1] - self.valid_range [i][0]) + self.valid_range [i][0])]
         return idx_ret
         
     def step (self, action):
