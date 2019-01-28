@@ -79,7 +79,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
 
         for step in range(args.num_steps):
             player.action_train()
-            print ('step: ', step, 'reward_len: ', len (player.rewards))
+            # print ('step: ', step, 'reward_len: ', len (player.rewards))
             if rank == 0:
                 eps_reward += player.reward
                 mean_log_prob += player.log_probs [-1] 
@@ -119,24 +119,24 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
             with torch.cuda.device (gpu_id):
                 R = R.cuda ()
 
-        print ("len values: ", len (player.values))
+        # print ("len values: ", len (player.values))
 
         for i in reversed(range(len(player.rewards))):
-            print ("_____R", R)
-            print ("_____reward_i", player.values[i])
+            # print ("_____R", R)
+            # print ("_____reward_i", player.values[i])
             R = gamma * R + player.rewards[i]
-            print ("R", R)
-            print ("values_i", player.values[i])
+            # print ("R", R)
+            # print ("values_i", player.values[i])
             advantage = R - player.values[i]
             # value_loss = value_loss + F.smooth_l1_loss (input=player.values[i], target=R)
             value_loss = value_loss + advantage.pow (2)
 
             # Generalized Advantage Estimataion
-            print ('reward_i', player.rewards [i])
-            print ('values_i_1', player.values [i + 1].data)
-            print ('values_i', player.values [i].data)
-            print ('gamma', gamma)
-            print ('gae', gae)
+            # print ('reward_i', player.rewards [i])
+            # print ('values_i_1', player.values [i + 1].data)
+            # print ('values_i', player.values [i].data)
+            # print ('gamma', gamma)
+            # print ('gae', gae)
             delta_t = player.rewards[i] 
             tmp = gamma * player.values[i + 1].data
             delta_t = delta_t + tmp
