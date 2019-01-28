@@ -1,7 +1,7 @@
+from __future__ import print_function
 from onestep_environment import *
 from img_aug_func import *
 import matplotlib.pyplot as plt
-from __future__ import print_function
 
 
 base_path = '/home/Pearl/tuan/_Data/ml16-master/segmentation/data/'
