@@ -96,10 +96,6 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
                                         (player.hx, player.cx)))
             R = value.data
 
-        if gpu_id >= 0:
-            with torch.cuda.device (gpu_id):
-                R = R.cuda ()
-
         player.values.append(Variable(R))
         policy_loss = 0
         value_loss = 0
@@ -110,6 +106,9 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
                 gae = gae.cuda ()
 
         R = Variable (R)
+        if gpu_id >= 0:
+            with torch.cuda.device (gpu_id):
+                R = R.cuda ()
 
         print ("len values: ", len (player.values))
 
