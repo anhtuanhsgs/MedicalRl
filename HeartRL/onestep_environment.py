@@ -161,8 +161,11 @@ class Environment:
         self.cur_dist = distance (self.get_cen (), self.target)
 
     def observation (self):
-        raw = np.expand_dims (self.raw [::], -1)
-        return raw
+        raw = self.raw [::]
+        raw = mov_img (raw, self.state.mov_dist, self.max_mov_dist)
+        raw = np.expand_dims (raw, -1)
+        ret = raw.astype (np.uint8)
+        return ret
 
     def get_boundary_mask (self, img, pad=5):
 
