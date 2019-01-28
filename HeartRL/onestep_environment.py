@@ -144,6 +144,7 @@ class Environment:
         mov_dist = (np.random.randint (-max_mov_dist, max_mov_dist + 1), 
             np.random.randint (-max_mov_dist, max_mov_dist + 1))
         self.target [0] -= mov_dist[0]; self.target[1] -= mov_dist[1]
+        print ("target: ", self.target)
         self.state = State (0, [0, 0], self.raw.shape, img_id, self.target, mov_dist)
         self.cur_dist = distance (self.get_cen (), self.target)
         return self.observation ()
