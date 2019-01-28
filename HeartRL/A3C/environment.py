@@ -11,6 +11,7 @@ from natsort import natsorted
 from img_aug_func import *
 import copy
 import math
+from gym.spaces import Box, Discrete, Tuple
 
 def get_center (lbl_img):
     ske = skeletonize (lbl_img == 255)
@@ -52,7 +53,8 @@ class EM_env:
         self.obs_format = obs_format
         self.env_conf = env_conf
         self.setup_conf ()
-        
+        self.action_space = Discrete(np.prod (self.agent_out_shape))
+        self.observation_space = Box (0.0, 255.0, shape=self.observation_shape, dtype=np.float32)
         self.reset ()
 
     def setup_conf (self):
