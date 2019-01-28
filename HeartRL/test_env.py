@@ -42,5 +42,5 @@ for t in range (T):
 	while not done:
 		action = int (input ("action = "))
 		obs, reward, done, info = player.step ()
-		print ("reward: ", reward)
+		print ("done: ", done, "reward: ", reward)
 		show (obs)
