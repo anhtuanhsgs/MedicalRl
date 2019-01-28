@@ -1,4 +1,4 @@
-from environment import *
+from onestep_environment import *
 from img_aug_func import *
 import matplotlib.pyplot as plt
 
@@ -26,7 +26,7 @@ for i in range (len (raw_list)):
 
 player = Environment (raw_list, lbl_list)
 
-tmp = player.reset ()
+obs = player.reset ()
 
 def show (obs):
     tmp = []
@@ -36,25 +36,11 @@ def show (obs):
     plt.imshow (img, cmap='gray')
     plt.show ()
 
-obs, reward, done, info = player.step (2)
-print (obs.shape)
-show (obs)
-obs, reward, done, info = player.step (3)
-show (obs)
-obs, reward, done, info = player.step (1)
-show (obs)
-obs, reward, done, info = player.step (3)
-show (obs)
-obs, reward, done, info = player.step (1)
-show (obs)
-
-print 'obs shape:', obs.shape
-print 'log_img shape:', player.get_log_img ().shape
-
-plt.imshow (obs[...,3])
-plt.show ()
-
-
-
-# plt.imshow (player.get_log_img ())
-# plt.show ()
+T = 3
+for t in range (T):
+	done = False
+	while not Done:
+		action = int (input ("action = "))
+		obs, reward, done, info = player.step ()
+		print ("reward: ", reward)
+		show (obs)

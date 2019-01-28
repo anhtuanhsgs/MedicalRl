@@ -82,6 +82,11 @@ class Environment:
 		self.raw_list = raw_list
 		self.lbl_list = lbl_list
 
+		self.valid_range = [
+                [self.corrector_size [0] // 2, self.observation_shape[1] - self.corrector_size [0] // 2],
+                [self.corrector_size [1] // 2, self.observation_shape[2] - self.corrector_size [1] // 2]
+            ]
+
 		self.reset ()
 		
 	def step (self, action):
@@ -127,30 +132,6 @@ class Environment:
 		state.action_his += [action.val]
 
 
-		if action.val == 0:
-			state.start [0] += 0
-			state.start [1] += 0
-
-		if action.val == 1:
-			state.start [0] += 0
-			state.start [1] += state.size [1]
-
-		if action.val == 2:
-			state.start [0] += state.size [0]
-			state.start [1] += 0
-
-		if action.val == 3:
-			state.start [0] += state.size [0]
-			state.start [1] += state.size [1]
-
-		if state.size [0] < 32 or state.size[1] < 32:
-			state.done = True
-			info = {
-				'ale.lives': 0
-			}
-			done = True
-		else:
-			state.done = False
 
 		# if state.start [0] <= state.target [0] < state.start [0] + state.size [0] \
 		# 	and state.start[1] <= state.target [1] < state.start [1] + state.size [1] \
