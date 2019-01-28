@@ -142,6 +142,7 @@ class Environment:
         return self.state.center ()
 
     def reset (self):
+        print (self.raw_list)
         img_id = np.random.randint (len (self.raw_list))
         self.raw = self.raw_list [img_id]
         self.lbl = self.lbl_list [img_id]
