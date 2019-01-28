@@ -200,6 +200,7 @@ class Environment:
         target = self.get_state ().target
 
         print ("target: ", target)
+        print ("dist: ", self.state.mov_dist)
 
         # Draw center, target
         dxs = [-1, -1, -1, 0, 0,  0, 1, 1,  1]
