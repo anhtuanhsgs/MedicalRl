@@ -108,6 +108,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
         if gpu_id >= 0:
             with torch.cuda.device (gpu_id):
                 R = R.cuda ()
+                gae = gae.cuda ()
 
         R = Variable (R)
 
@@ -123,6 +124,8 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
             print ('reward_i', player.rewards [i])
             print ('values_i_1', player.values [i + 1].data)
             print ('values_i', player.values [i].data)
+            print ('gamma', args.gamma)
+            print ('gae', gae)
             delta_t = player.rewards[i] + args.gamma * player.values[i + 1].data - player.values[i].data
             gae = gae * args.gamma * args.tau + delta_t
             policy_loss = policy_loss - player.log_probs[i] * Variable(gae) - 0.05 * player.entropies[i]
