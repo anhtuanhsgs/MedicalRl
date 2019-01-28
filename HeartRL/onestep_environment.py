@@ -120,6 +120,7 @@ class Environment:
         action_index = self.int2index (action, self.agent_out_shape)
         center_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
 
+        print ('valid:', self.valid_range)
         print (action_index)
         print (center_index)
 
