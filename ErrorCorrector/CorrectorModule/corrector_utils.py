@@ -24,7 +24,7 @@ def init_fusion (model, gpu_id, checkpoint_path):
 def spliter_FusionNet (raw, prob, gpu_id):
     global spliter_net
     if spliter_net is None:
-        spliter_checkpoint = 'CorrectorModule/checkpoints/spliter_WBCE_128_02_0.95/checkpoint_602000.pth.tar'
+        spliter_checkpoint = '../CorrectorModule/checkpoints/spliter_WBCE_128_02_0.95/checkpoint_602000.pth.tar'
         spliter_net = FusionNet (IN_CH, FEATURES, OUT_CH)
         init_fusion (spliter_net, gpu_id, spliter_checkpoint)
 
@@ -41,7 +41,7 @@ def spliter_FusionNet (raw, prob, gpu_id):
 def merger_FusionNet (raw, prob, gpu_id):
     global merger_net
     if merger_net is None:
-        merger_checkponit = 'CorrectorModule/checkpoints/merger_WBCE_128_00_0.2/checkpoint_592000.pth.tar'
+        merger_checkponit = '../CorrectorModule/checkpoints/merger_WBCE_128_00_0.2/checkpoint_592000.pth.tar'
         merger_net = FusionNet (IN_CH, FEATURES, OUT_CH)
         init_fusion (merger_net, gpu_id, merger_checkponit)
 
