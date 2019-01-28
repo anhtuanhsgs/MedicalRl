@@ -14,7 +14,6 @@ from natsort import natsorted
 from Utils.img_aug_func import *
 from Utils.utils import *
 from skimage.measure import label
-from CorrectorModule.corrector_utils import *
 from shared_optim import SharedRMSprop, SharedAdam
 
 
@@ -112,12 +111,6 @@ parser.add_argument(
     help='GPUs to use [-1 CPU only] (default: -1)')
 
 parser.add_argument(
-    '--env-gpu',
-    type=int,
-    default=0,
-    help='GPUs to use [-1 CPU only] (default: -1)')
-
-parser.add_argument(
     '--amsgrad',
     default=True,
     metavar='AM',
@@ -136,18 +129,6 @@ parser.add_argument(
     default=10,
     metavar='LP',
     help='Adam optimizer amsgrad parameter')
-
-parser.add_argument (
-    '--spliter',
-    default='FusionNet',
-    metavar='SPL',
-    choices=['FusionNet', 'Thres'])
-
-parser.add_argument (
-    '--merger',
-    default='FusionNet',
-    metavar='MER',
-    choices=['FusionNet', 'Thres'])
 
 parser.add_argument(
     '--shared-optimizer',
@@ -168,7 +149,6 @@ def setup_env_conf (args):
         "num_action": 1 * 8 * 8,
         "observation_shape": [1, 256, 256],
         "local_wd_size": [32, 32],
-        "env_gpu": args.env_gpu
     }
     return env_conf
 
