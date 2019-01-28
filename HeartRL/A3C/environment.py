@@ -46,8 +46,6 @@ class State:
 class EM_env:
     def __init__ (self, raw_list, lbl_list, env_conf, obs_format="CHW"):
         self.max_mov_dist = 80
-        self.action_space = ActionSpace (5)
-
         self.raw_list = raw_list
         self.lbl_list = lbl_list
         self.obs_format = obs_format
