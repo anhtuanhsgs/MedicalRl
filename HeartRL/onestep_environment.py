@@ -120,7 +120,7 @@ class Environment:
 
         self.state.start = [center_index [0] - self.local_wd_size [0] // 2, center_index [1] - self.local_wd_size [0] // 2]
         self.state.size = self.local_wd_size
-        reward = (max_dist - distance (center_index, state.target)) / max_dist * max_reward
+        reward = (max_dist - distance (center_index, self.state.target)) / max_dist * max_reward
         if reward < max_reward * threshold_ratio:
             reward = 0
 
@@ -190,7 +190,7 @@ class Environment:
         log_img_pad = 5
         obs = self.observation ()
         log_img = obs [...,0]
-        log_img = np.pad (log_img, pad_width=log_img_pad, mode='constant', constant_values=255)
+        # log_img = np.pad (log_img, pad_width=log_img_pad, mode='constant', constant_values=255)
         log_img = np.repeat (np.expand_dims (log_img, -1), 3, -1)
         log_img = np.expand_dims (log_img, 0)
         log_img = self.get_boundary_mask (log_img, log_img_pad).astype (np.uint8)
