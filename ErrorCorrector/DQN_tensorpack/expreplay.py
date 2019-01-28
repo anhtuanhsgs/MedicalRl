@@ -215,7 +215,7 @@ class ExpReplay(DataFlow, Callback):
             act = np.argmax(q_values)
         self._current_ob, reward, isOver, info = self.player.step(act)
         self._current_game_score.feed(reward)
-
+        debug = True
         if debug:    
             print ('debug act ', act)
             import cv2    
