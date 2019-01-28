@@ -187,7 +187,7 @@ class Environment:
         return self.action_space
 
     def get_log_img (self):
-        log_img_pad = 5
+        log_img_pad = 0
         obs = self.observation ()
         log_img = obs [...,0]
         # log_img = np.pad (log_img, pad_width=log_img_pad, mode='constant', constant_values=255)
