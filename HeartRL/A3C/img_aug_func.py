@@ -41,6 +41,13 @@ def read_im (paths):
         ret.append (io.imread (path))
     return ret
 
+def mov_img (img, mov_dist, max_pad):
+    assert (len (img.shape) == 2)
+    size = img.shape
+    img = np.pad (img, max_pad, mode='constant', constant_values=0)
+    x0 = max_pad + mov_dist[0]; y0 = max_pad + mov_dist[1];
+    return img [x0:x0+size[0], y0:y0+size[1]]
+
 def random_reverse(image, seed=None):
     assert ((image.ndim == 2) | (image.ndim == 3))
     if seed:
