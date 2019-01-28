@@ -99,7 +99,13 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
                                         (player.hx, player.cx)))
             R = value.data
 
-        player.values.append(Variable(R))
+
+        if gpu_id >= 0:
+            with torch.cuda.device (gpu_id):
+            player.values.append(Variable(R).cuda ())
+        else:
+            player.values.append(Variable(R))
+
         policy_loss = 0
         value_loss = 0
         gae = torch.zeros(1, 1)
