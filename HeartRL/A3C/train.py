@@ -75,8 +75,8 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
             player.hx = Variable(player.hx.data)
 
         for step in range(args.num_steps):
-            print ('step: ', step, 'reward_len: ', len (player.rewards))
             player.action_train()
+            print ('step: ', step, 'reward_len: ', len (player.rewards))
             if rank == 0:
                 eps_reward += player.reward
                 mean_log_prob += player.log_probs [-1] 
@@ -120,6 +120,9 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
             value_loss = value_loss + advantage.pow (2)
 
             # Generalized Advantage Estimataion
+            print ('reward_i', player.rewards [i])
+            print ('values_i_1', player.values [i + 1].data)
+            print ('values_i', player.values [i].data)
             delta_t = player.rewards[i] + args.gamma * player.values[i + 1].data - player.values[i].data
             gae = gae * args.gamma * args.tau + delta_t
             policy_loss = policy_loss - player.log_probs[i] * Variable(gae) - 0.05 * player.entropies[i]
