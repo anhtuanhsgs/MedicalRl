@@ -75,7 +75,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
             player.hx = Variable(player.hx.data)
 
         for step in range(args.num_steps):
-            print ('step: ', step)
+            print ('step: ', step, 'reward_len: ', len (player.rewards))
             player.action_train()
             if rank == 0:
                 eps_reward += player.reward
