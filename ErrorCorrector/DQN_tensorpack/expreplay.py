@@ -221,8 +221,10 @@ class ExpReplay(DataFlow, Callback):
             import cv2    
             print ('shape', self._current_ob.shape)
             print ('shape2', self._current_ob[...,1].shape)
-            cur_log_img = self._current_ob [...,0]
-            old_log_img = old_s [...,0]
+            cur_log_img = np.concatenate ([np.pad (self._current_ob[...,i], pad_width=5, mode='constant', constant_values=255) 
+                for i in range (2)], 1)
+            old_log_img = np.concatenate ([np.pad (old_s[...,i], pad_width=5, mode='constant', constant_values=255) 
+                for i in range (2)], 1)
             print ('debug reward', reward)
             print ('isover', isOver)
             cv2.imshow ('old_cur', np.concatenate ([old_log_img, cur_log_img], 0));
