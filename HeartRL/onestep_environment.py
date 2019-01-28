@@ -86,8 +86,8 @@ class Environment:
         self.local_wd_size = (45, 45)
         self.agent_out_shape = (1, 6, 6)
         self.valid_range = [
-                [self.local_wd_size [0] // 2, self.observation_shape[1] - self.local_wd_size [0] // 2],
-                [self.local_wd_size [1] // 2, self.observation_shape[2] - self.local_wd_size [1] // 2]
+                [self.local_wd_size [0] // 2 + 1, self.observation_shape[1] - self.local_wd_size [0] // 2 - 1],
+                [self.local_wd_size [1] // 2 + 1, self.observation_shape[2] - self.local_wd_size [1] // 2 - 1]
             ]
 
         self.reset ()
