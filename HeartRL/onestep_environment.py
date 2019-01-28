@@ -120,14 +120,14 @@ class Environment:
         action_index = self.int2index (action, self.agent_out_shape)
         center_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
 
-        print ('valid:', self.valid_range)
-        print (action_index)
-        print (center_index)
+        # print ('valid:', self.valid_range)
+        # print (action_index)
+        # print (center_index)
 
         state.start = [center_index [0] - self.local_wd_size [0] // 2, center_index [1] - self.local_wd_size [0] // 2]
         state.size = self.local_wd_size
-        print ('start: ', state.start)
-        print ("size: ", state.size)
+        # print ('start: ', state.start)
+        # print ("size: ", state.size)
         reward = (max_dist - distance (center_index, state.target)) / max_dist * max_reward
         if reward < max_reward * threshold_ratio:
             reward = 0
@@ -142,7 +142,7 @@ class Environment:
         return self.state.center ()
 
     def reset (self):
-        print (self.raw_list)
+        # print (self.raw_list)
         img_id = np.random.randint (len (self.raw_list))
         self.raw = self.raw_list [img_id]
         self.lbl = self.lbl_list [img_id]

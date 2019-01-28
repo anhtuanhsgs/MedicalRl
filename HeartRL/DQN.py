@@ -165,9 +165,9 @@ def init_data ():
     raw_path = base_path + 'train/images/'
     label_path = base_path + 'train/labels/'
 
-    print (base_path)
-    print (raw_path)
-    print (label_path)
+    # print (base_path)
+    # print (raw_path)
+    # print (label_path)
 
     raw_files = natsorted (glob.glob (raw_path + '*.png'))
     lbl_files = natsorted (glob.glob (label_path + '*.png'))
@@ -211,10 +211,11 @@ if __name__ == '__main__':
     METHOD = args.algo
     # set num_actions
     # NUM_ACTIONS = get_player().action_space.n
+    raw_list, lbl_list = init_data ()
     NUM_ACTIONS = np.prod (get_player ().agent_out_shape)
     logger.info("ENV: {}, Num Actions: {}".format(ENV_NAME, NUM_ACTIONS))
 
-    raw_list, lbl_list = init_data ()
+    
 
     if args.task != 'train':
         assert args.load is not None
