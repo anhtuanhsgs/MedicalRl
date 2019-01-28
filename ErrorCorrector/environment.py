@@ -67,6 +67,12 @@ class EM_env (gym.Env):
             ]
         # print ('valid range', self.valid_range)
 
+    def clip (self, imgs):
+        ret = []
+        for img in imgs:
+            ret += [np.clip (img, 0.05, 0.95)]
+        return ret
+
     def reset (self):
         self.step_cnt = 0
         z0 = self.rng.randint (0, len (self.raw_list))
@@ -173,11 +179,16 @@ class EM_env (gym.Env):
                 self.prob [None],
                 # self.info_mask [None]
             ], 0)
+
+
         if self.obs_format == "CHW":
-            return obs.astype (np.float32) / 255.0
+            ret = obs.astype (np.float32) / 255.0
+            ret = np.clip (ret, 0.05, 0.95)
+            return ret 
         else:
-            obs = np.transpose (obs, [1, 2, 0]) / 255.0
-            return obs
+            ret = np.transpose (obs, [1, 2, 0]) / 255.0
+            ret = np.clip (ret, 0.05, 0.95)
+            return ret
 
     def step (self, action):
         assert (action < np.prod (self.agent_out_shape))
