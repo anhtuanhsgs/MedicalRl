@@ -114,7 +114,7 @@ class Environment:
         max_dist = 256 * 2
         max_reward = 1
         threshold_ratio = 0.95
-        action = Action (action)
+        # action = Action (action)
         action_index = self.int2index (action, self.agent_out_shape)
         center_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
 

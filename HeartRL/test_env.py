@@ -39,8 +39,10 @@ def show (obs):
 T = 3
 for t in range (T):
 	done = False
+	obs = player.reset ()
+	show (obs)
 	while not done:
 		action = int (input ("action = "))
-		obs, reward, done, info = player.step ()
+		obs, reward, done, info = player.step (action)
 		print ("done: ", done, "reward: ", reward)
 		show (obs)
