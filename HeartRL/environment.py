@@ -82,11 +82,6 @@ class Environment:
 		self.raw_list = raw_list
 		self.lbl_list = lbl_list
 
-		self.valid_range = [
-                [self.corrector_size [0] // 2, self.observation_shape[1] - self.corrector_size [0] // 2],
-                [self.corrector_size [1] // 2, self.observation_shape[2] - self.corrector_size [1] // 2]
-            ]
-
 		self.reset ()
 		
 	def step (self, action):

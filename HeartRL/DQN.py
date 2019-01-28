@@ -17,7 +17,7 @@ from common import Evaluator, eval_model_multithread, play_n_episodes, LogVisual
 from atari_wrapper import FrameStack, MapState, FireResetEnv, LimitLength
 from expreplay import ExpReplay
 # from atari import AtariPlayer
-from environment import *
+from onestep_environemnt import *
 
 BATCH_SIZE = 16
 # IMAGE_SIZE = (84, 84)
