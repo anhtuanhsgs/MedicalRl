@@ -124,7 +124,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
         for i in reversed(range(len(player.rewards))):
             print ("_____R", R.dtype)
             print ("_____reward_i", player.values[i].dtype)
-            R = gamma * R + player.rewards[i].dtype
+            R = gamma * R + player.rewards[i]
             print ("R", R.dtype)
             print ("values_i", player.values[i].dtype)
             advantage = R - player.values[i]
