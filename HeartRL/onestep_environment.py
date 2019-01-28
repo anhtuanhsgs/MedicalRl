@@ -126,6 +126,8 @@ class Environment:
 
         state.start = [center_index [0] - self.local_wd_size [0] // 2, center_index [1] - self.local_wd_size [0] // 2]
         state.size = self.local_wd_size
+        print ('start: ', state.start)
+        print ("size: ", state.size)
         reward = (max_dist - distance (center_index, state.target)) / max_dist * max_reward
         if reward < max_reward * threshold_ratio:
             reward = 0
