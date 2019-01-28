@@ -122,22 +122,25 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
         print ("len values: ", len (player.values))
 
         for i in reversed(range(len(player.rewards))):
-            print ("_____R", R.dtype)
-            print ("_____reward_i", player.values[i].dtype)
+            print ("_____R", R)
+            print ("_____reward_i", player.values[i])
             R = gamma * R + player.rewards[i]
-            print ("R", R.dtype)
-            print ("values_i", player.values[i].dtype)
+            print ("R", R)
+            print ("values_i", player.values[i])
             advantage = R - player.values[i]
             # value_loss = value_loss + F.smooth_l1_loss (input=player.values[i], target=R)
             value_loss = value_loss + advantage.pow (2)
 
             # Generalized Advantage Estimataion
             print ('reward_i', player.rewards [i])
-            print ('values_i_1', player.values [i + 1].data.dtype)
-            print ('values_i', player.values [i].data.dtype)
-            print ('gamma', gamma.dtype)
-            print ('gae', gae.dtype)
-            delta_t = player.rewards[i] + gamma * player.values[i + 1].data - player.values[i].data
+            print ('values_i_1', player.values [i + 1].data)
+            print ('values_i', player.values [i].data)
+            print ('gamma', gamma)
+            print ('gae', gae)
+            delta_t = player.rewards[i] 
+            tmp = gamma * player.values[i + 1].data
+            delta_t = delta_t + tmp
+            delta_t = - player.values[i].data
             gae = gae * gamma * args.tau + delta_t
             policy_loss = policy_loss - player.log_probs[i] * Variable(gae) - 0.05 * player.entropies[i]
             entropy = player.entropies [i]
