@@ -215,6 +215,19 @@ class ExpReplay(DataFlow, Callback):
             act = np.argmax(q_values)
         self._current_ob, reward, isOver, info = self.player.step(act)
         self._current_game_score.feed(reward)
+
+        if debug:    
+            print ('debug act ', act)
+            import cv2    
+            print ('shape', self._current_ob.shape)
+            print ('shape2', self._current_ob[...,1].shape)
+            cur_log_img = self._current_ob [...,0]
+            old_log_img = old_s [...,0]
+            print ('debug reward', reward)
+            print ('isover', isOver)
+            cv2.imshow ('old_cur', np.concatenate ([old_log_img, cur_log_img], 0));
+            cv2.waitKey()
+
         if isOver:
             self._player_scores.feed(self._current_game_score.sum)
             self._current_game_score.reset()
