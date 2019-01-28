@@ -196,6 +196,8 @@ class Environment:
         log_img = self.get_boundary_mask (log_img, log_img_pad).astype (np.uint8)
         target = self.get_state ().target
 
+        print ("target: ", target)
+
         # Draw center, target
         dxs = [-1, -1, -1, 0, 0,  0, 1, 1,  1]
         dys = [ 1,  0, -1, 1, 0, -1, 1, 0, -1]
