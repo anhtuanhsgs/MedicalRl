@@ -30,7 +30,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
             optimizer = optim.RMSprop (shared_model.parameters (), lr=args.lr)
         if args.optimizer == 'Adam':
             optimizer = optim.Adam (shared_model.parameters (), lr=args.lr, amsgrad=args.amsgrad)
-    gamma = np.float32 (args.gamma)
+    gamma = np.float32 (1.0)
         # env.seed (args.seed + rank)
     player = Agent (None, env, args, None)
     player.gpu_id = gpu_id
@@ -107,7 +107,6 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
 
         if gpu_id >= 0:
             with torch.cuda.device (gpu_id):
-                R = R.cuda ()
                 gae = gae.cuda ()
 
         R = Variable (R)
