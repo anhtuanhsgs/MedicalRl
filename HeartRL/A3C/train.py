@@ -78,7 +78,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
             player.action_train()
             if rank == 0:
                 eps_reward += player.reward
-                mean_log_prob += player.log_probs [-1] / env_conf ["T"]
+                mean_log_prob += player.log_probs [-1] 
             if player.done:
                 break
 

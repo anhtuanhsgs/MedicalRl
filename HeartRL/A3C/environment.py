@@ -153,6 +153,10 @@ class EM_env:
         size = self.state.size
         start = copy.deepcopy (self.state.start)
 
+        # print ("start: ", start)
+        # print ("size: ", size)
+        # print ("img shape: ", img.shape)
+
         start [0] += pad
         start [1] += pad
 
@@ -176,6 +180,8 @@ class EM_env:
     def render (self):
         log_img_pad = 0
         obs = self.observation ()
+        if (self.obs_format == "CHW"):
+            obs = np.transpose (obs, [1, 2, 0])
         log_img = obs [...,0]
         # log_img = np.pad (log_img, pad_width=log_img_pad, mode='constant', constant_values=255)
         log_img = np.repeat (np.expand_dims (log_img, -1), 3, -1)
