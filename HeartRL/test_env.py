@@ -1,6 +1,7 @@
 from onestep_environment import *
 from img_aug_func import *
 import matplotlib.pyplot as plt
+from __future__ import print_function
 
 
 base_path = '/home/Pearl/tuan/_Data/ml16-master/segmentation/data/'
@@ -27,6 +28,13 @@ for i in range (len (raw_list)):
 player = Environment (raw_list, lbl_list)
 
 obs = player.reset ()
+
+agent_out_shape = player.agent_out_shape
+cnt = 0
+for i in range (agent_out_shape [1]):
+    for j in range (agent_out_shape [2]):
+        print (cnt, end='\t')
+    print ()
 
 def show (obs):
     tmp = []
