@@ -40,7 +40,7 @@ class State:
 		return self.start[0] + self.size [0] / 2, self.start[1] + self.size [1] / 2
 
 	def debug (self):
-		print 'id:', self.id, 'start:', self.start, 'size:', self.size, 'img_id:', self.img_id, 'target:', self.target, 'depth:', self.depth
+		print ('id:', self.id, 'start:', self.start, 'size:', self.size, 'img_id:', self.img_id, 'target:', self.target, 'depth:', self.depth)
 
 class Action:
 	def __init__ (self, value):
