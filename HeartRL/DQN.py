@@ -165,6 +165,10 @@ def init_data ():
     raw_path = base_path + 'train/images/'
     label_path = base_path + 'train/labels/'
 
+    print (base_path)
+    print (raw_path)
+    print (label_path)
+
     raw_files = natsorted (glob.glob (raw_path + '*.png'))
     lbl_files = natsorted (glob.glob (label_path + '*.png'))
 
