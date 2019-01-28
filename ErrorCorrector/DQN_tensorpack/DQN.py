@@ -21,7 +21,7 @@ import os,sys, argparse, glob
 import functools
 from utils import setup_data
 sys.path.append('../')
-from environment import EM_env
+from onestep_environment import EM_env
 from Utils.img_aug_func import *
 from Utils.utils import *
 from CorrectorModule.corrector_utils import *

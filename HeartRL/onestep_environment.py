@@ -83,8 +83,8 @@ class Environment:
         self.lbl_list = lbl_list
 
         self.observation_shape = (1, 256, 256)
-        self.local_wd_size = (45, 45)
-        self.agent_out_shape = (1, 6, 6)
+        self.local_wd_size = (32, 32)
+        self.agent_out_shape = (1, 8, 8)
         self.valid_range = [
                 [self.local_wd_size [0] // 2 + 1, self.observation_shape[1] - self.local_wd_size [0] // 2 - 1],
                 [self.local_wd_size [1] // 2 + 1, self.observation_shape[2] - self.local_wd_size [1] // 2 - 1]
@@ -113,7 +113,7 @@ class Environment:
         reward = 0
         max_dist = 256 * 2
         max_reward = 1
-        threshold_ratio = 0.95
+        threshold_ratio = 0.9
         state = copy.deepcopy (self.state)
         self.set_state (state)
         # action = Action (action)
