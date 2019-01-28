@@ -114,16 +114,18 @@ class Environment:
         max_dist = 256 * 2
         max_reward = 1
         threshold_ratio = 0.95
+        state = copy.deepcopy (self.state)
+        self.set_state (state)
         # action = Action (action)
         action_index = self.int2index (action, self.agent_out_shape)
         center_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
 
-        self.state.start = [center_index [0] - self.local_wd_size [0] // 2, center_index [1] - self.local_wd_size [0] // 2]
-        self.state.size = self.local_wd_size
-        reward = (max_dist - distance (center_index, self.state.target)) / max_dist * max_reward
+        state.start = [center_index [0] - self.local_wd_size [0] // 2, center_index [1] - self.local_wd_size [0] // 2]
+        state.size = self.local_wd_size
+        reward = (max_dist - distance (center_index, state.target)) / max_dist * max_reward
         if reward < max_reward * threshold_ratio:
             reward = 0
-
+        self.set_state (state)
         return self.observation (), reward, done, info
 
 
