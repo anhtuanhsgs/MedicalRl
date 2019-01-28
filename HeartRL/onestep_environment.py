@@ -83,7 +83,8 @@ class Environment:
         self.lbl_list = lbl_list
 
         self.observation_shape = (256, 256)
-        self.local_wd_size = (8, 8)
+        self.local_wd_size = (45, 45)
+        self.agent_out_shape = (1, 6, 6)
         self.valid_range = [
                 [self.local_wd_size [0] // 2, self.observation_shape[1] - self.local_wd_size [0] // 2],
                 [self.local_wd_size [1] // 2, self.observation_shape[2] - self.local_wd_size [1] // 2]
@@ -114,11 +115,11 @@ class Environment:
         max_reward = 1
         threshold_ratio = 0.95
         action = Action (action)
-        action_index = self.int2index (action, self.local_wd_size)
-        center_index = self.index2validrange (action_index [1:], self.local_wd_size [1:])
+        action_index = self.int2index (action, self.agent_out_shape)
+        center_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
 
-        self.state.start = [center_index [0] - self.local_wd_size [1], center_index [1] - self.local_wd_size [2]]
-        self.state.size = self.local_wd_size [1:]
+        self.state.start = [center_index [0] - self.local_wd_size [0] // 2, center_index [1] - self.local_wd_size [0] // 2]
+        self.state.size = self.local_wd_size
         reward = (max_dist - distance (center_index, state.target)) / max_dist * max_reward
         if reward < max_reward * threshold_ratio:
             reward = 0
