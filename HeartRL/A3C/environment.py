@@ -17,7 +17,7 @@ def get_center (lbl_img):
     ske = skeletonize (lbl_img == 255)
     index_list = np.where (ske)
     index_mean = (np.mean (index_list[0]), np.mean (index_list[1]))
-    index_zip = np.array (zip (index_list[0], index_list[1]))
+    index_zip = np.array (list (zip (index_list[0], index_list[1])))
     centroid_id = np.argmin (np.sum ((index_zip - index_mean) ** 2, axis=1))
     return index_zip [centroid_id]
 
@@ -38,7 +38,7 @@ class State:
         self.action_his = []
 
     def center (self):
-        return self.start[0] + self.size [0] / 2, self.start[1] + self.size [1] / 2
+        return self.start[0] + self.size [0] // 2, self.start[1] + self.size [1] // 2
 
     def debug (self):
         print ('id:', self.id, 'start:', self.start, 'size:', self.size, 'img_id:', self.img_id, 'target:', self.target, 'depth:', self.depth)
@@ -101,7 +101,7 @@ class EM_env:
         state.size = self.local_wd_size
         # print ('start: ', state.start)
         # print ("size: ", state.size)
-        reward = (max_dist - distance (center_index, state.target)) / max_dist * max_reward
+        reward = (max_dist - 1.0 * distance (center_index, state.target)) / max_dist * max_reward
         if reward < max_reward * threshold_ratio:
             reward = 0
         self.set_state (state)
