@@ -116,6 +116,9 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
             with torch.cuda.device (gpu_id):
                 gae = gae.cuda ()
         R = Variable (R)
+
+        print ("len values: ", len (player.values))
+
         for i in reversed(range(len(player.rewards))):
             R = args.gamma * R + player.rewards[i]
             advantage = R - player.values[i]
