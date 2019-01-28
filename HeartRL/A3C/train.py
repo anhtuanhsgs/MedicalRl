@@ -114,7 +114,10 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
         print ("len values: ", len (player.values))
 
         for i in reversed(range(len(player.rewards))):
+
             R = gamma * R + player.rewards[i]
+            print ("R", R)
+            print ("values_i", player.values[i])
             advantage = R - player.values[i]
             # value_loss = value_loss + F.smooth_l1_loss (input=player.values[i], target=R)
             value_loss = value_loss + advantage.pow (2)
