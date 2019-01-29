@@ -49,15 +49,19 @@ def test (args, shared_model, env_conf, datasets, rank=-1):
 
     log_train_period = 30
     logging = True
+    flag = True
 
     while True:
-        if gpu_id >= 0:
-            with torch.cuda.device (gpu_id):
+        if flag:
+            if gpu_id >= 0:
+                with torch.cuda.device (gpu_id):
+                    player.model.load_state_dict (shared_model.state_dict ())
+            else:
                 player.model.load_state_dict (shared_model.state_dict ())
-        else:
-            player.model.load_state_dict (shared_model.state_dict ())
+            flag = False
         
         if player.done:
+            flag = True
             player.eps_len = 0
             if rank == -1:
                 # if log_train_period <= train_step < log_train_period + 6:
