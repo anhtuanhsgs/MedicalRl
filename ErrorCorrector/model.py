@@ -104,60 +104,68 @@ class A3Clstm(torch.nn.Module):
         return self.critic_linear(x), self.actor_linear(x), (hx, cx)
 
 
-def make_layers(cfg, instance_norm=True, in_channels=5):
-    layers = []
-    for v in cfg:
-        if v == 'M':
-            layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
-        else:
-            conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
-            if instance_norm:
-                layers += [conv2d, nn.InstanceNorm2d(v), nn.ReLU(inplace=True)]
-            else:
-                layers += [conv2d, nn.ReLU(inplace=True)]
-            in_channels = v
-    return nn.Sequential(*layers)
+# def make_layers(cfg, instance_norm=True, in_channels=5):
+#     layers = []
+#     for v in cfg:
+#         if v == 'M':
+#             layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
+#         else:
+#             conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
+#             if instance_norm:
+#                 layers += [conv2d, nn.InstanceNorm2d(v), nn.ReLU(inplace=True)]
+#             else:
+#                 layers += [conv2d, nn.ReLU(inplace=True)]
+#             in_channels = v
+#     return nn.Sequential(*layers)
 
-cfg = {
-    'A': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
-    'B': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
-    'D': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
-    'E': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512, 'M'],
-}
+# cfg = {
+#     'A': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
+#     'B': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
+#     'D': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
+#     'E': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512, 'M'],
+# }
 
-class VGGlstm(nn.Module):
+# class VGGlstm(nn.Module):
 
-    def __init__(self, features, input_shape, num_action_per_pixel):
-        super(VGGlstm, self).__init__()
-        self.features = features
+#     def __init__(self, features, input_shape, num_action_per_pixel):
+#         super(VGGlstm, self).__init__()
+#         self.features = features
         
-        num_values = input_shape [1] // (2 ** 5) * input_shape [2] // (2 ** 5) * 512
+#         num_values = input_shape [1] // (2 ** 5) * input_shape [2] // (2 ** 5) * 512
 
-        self.dense = nn.Sequential(
-            nn.Linear(num_values, 512),
-            nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(512, 1024),
-            nn.ReLU(True),
-            nn.Dropout(),
-        )
+#         self.dense = nn.Sequential(
+#             nn.Linear(num_values, 512),
+#             nn.ReLU(True),
+#             nn.Dropout(),
+#             nn.Linear(512, 1024),
+#             nn.ReLU(True),
+#             nn.Dropout(),
+#         )
 
-        num_outputs = input_shape [1] * input_shape[2] * num_action_per_pixel
+#         num_outputs = input_shape [1] * input_shape[2] * num_action_per_pixel
         
-        self.lstm = nn.LSTMCell (1024, 512)
-        self.critic_linear = nn.Linear (512, 1)
-        self.actor_linear = nn.Linear (512, num_outputs)
+#         self.lstm = nn.LSTMCell (1024, 512)
+#         self.critic_linear = nn.Linear (512, 1)
+#         self.actor_linear = nn.Linear (512, num_outputs)
 
-    def forward(self, inputs):
-        x, (hx, cx) = inputs
-        x = self.features(x)
-        x = x.view(x.size(0), -1)
-        x = self.dense (x)
-        hx, cx = self.lstm (x, (hx, cx))
-        x = hx
-        return self.critic_linear(x), self.actor_linear(x), (hx, cx)
+#     def forward(self, inputs):
+#         x, (hx, cx) = inputs
+#         x = self.features(x)
+#         x = x.view(x.size(0), -1)
+#         x = self.dense (x)
+#         hx, cx = self.lstm (x, (hx, cx))
+#         x = hx
+#         return self.critic_linear(x), self.actor_linear(x), (hx, cx)
 
-def vgg16lstm (**kwargs):
-    model = VGGlstm(make_layers(cfg['D']), **kwargs)
-    return model
+# def vgg16lstm (**kwargs):
+#     model = VGGlstm(make_layers(cfg['D']), **kwargs)
+#     return model
 
+if __main__ == "__main__":
+    model = A3Clstm ((1, 256, 256), 8*8*2, hidden_feat=512)
+    a = np.ones ((1, 1, 256, 256))
+    a_t = torch.tensor (a, dtype=torch.float32)
+    cx = torch.zeros(1, 512)
+    hx = torch.zeros(1, 512)
+    b, c = model ((a_t, (hx, cx)))
+    print (b.shape, c.shape)
