@@ -146,7 +146,7 @@ class SimpleCNN (nn.Module):
 
 if __name__ == '__main__':
     model = SimpleCNN ((1, 256, 256), 8*8*2)
-    a = np.ones ((1, 256, 256))
+    a = np.ones ((1, 1, 256, 256))
     a_t = torch.tensor (a, dtype=torch.float32)
     b, c = model (a_t)
     print (b.shape, c.shape)
