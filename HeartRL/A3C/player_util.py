@@ -69,7 +69,7 @@ class Agent (object):
         prob = F.softmax (logit, dim=1)
         prob_cpu = prob.cpu ().numpy ()
         prob_cpu = prob_cpu.reshape (self.env.agent_out_shape)
-        self.prob_cpu = self.prob_cpu
+        self.prob_cpu = prob_cpu
         action = prob.max (1)[1].data.cpu ().numpy ()
         state, self.reward, self.done, self.info = self.env.step (action [0])
         self.rewards.append (self.reward)
