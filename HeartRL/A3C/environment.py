@@ -86,7 +86,7 @@ class EM_env:
         reward = 0
         max_dist = 256 * 2
         max_reward = 1
-        threshold_ratio = 0.9
+        threshold_ratio = 0.8
         state = copy.deepcopy (self.state)
         self.set_state (state)
         # action = Action (action)
