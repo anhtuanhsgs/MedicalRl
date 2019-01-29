@@ -114,7 +114,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
             print ("value_loss: ", value_loss)
             print ("delta_t: ", player.rewards[i] + player.values[i + 1].data)
             # Generalized Advantage Estimataion
-            delta_t = player.rewards[i] + args.gamma * \
+            delta_t = player.rewards[i] + \
                 player.values[i + 1].data - player.values[i].data
 
             gae = gae * args.gamma * args.tau + delta_t
