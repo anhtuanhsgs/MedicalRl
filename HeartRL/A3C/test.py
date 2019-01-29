@@ -118,12 +118,12 @@ def test (args, shared_model, env_conf, datasets):
                 print ("sum rewards: ", reward_sum)
                 print ("------------------------------------------------")
                 log_img = np.concatenate (renderlist, 0)
-                log_info = {"traning_sample": log_img}
+                log_info = {"test: traning_sample": log_img}
                 for tag, img in log_info.items ():
                     img = img [None]
                     logger.image_summary (tag, img, num_tests)
 
-                log_info = {'mean_reward': reward_mean}
+                log_info = {'test: mean_reward': reward_mean}
                 for tag, value in log_info.items ():
                     logger.scalar_summary (tag, value, num_tests)
 
