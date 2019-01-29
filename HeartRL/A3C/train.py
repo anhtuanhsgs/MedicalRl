@@ -110,7 +110,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
             advantage = R - player.values[i]
             value_loss = value_loss + 0.5 * advantage.pow(2)
 
-            print ("advatage: ", advatage)
+            print ("advatage: ", advantage)
             print ("value_loss: ", value_loss)
             print ("delta_t: ", player.rewards[i] + args.gamma * splayer.values[i + 1].data - player.values[i].data)
             # Generalized Advantage Estimataion
