@@ -42,8 +42,6 @@ def test (args, shared_model, env_conf, datasets):
     player.gpu_id = gpu_id
     # player.model = A3Clstm (env.observation_space.shape, env_conf["num_action"], args.hidden_feat)
     player.model = SimpleCNN (env.observation_space.shape, env_conf["num_action"])
-    
-    value, _ = player.model(Variable(player.state.unsqueeze(0)))    
     player.state = player.env.reset ()
     player.state = torch.from_numpy (player.state).float ()
     if gpu_id >= 0:
@@ -52,7 +50,6 @@ def test (args, shared_model, env_conf, datasets):
             player.state = player.state.cuda ()
 
     flag = True
-
     create_dir (args.save_model_dir)
 
     recent_episode_scores = []
