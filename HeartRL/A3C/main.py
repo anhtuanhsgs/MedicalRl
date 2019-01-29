@@ -214,10 +214,10 @@ if __name__ == '__main__':
 
     processes = []
 
-    # p = mp.Process(target=test, args=(args, shared_model, env_conf, [raw, gt_lbl]))
-    # p.start()
-    # processes.append(p)
-    # time.sleep(1)
+    p = mp.Process(target=test, args=(args, shared_model, env_conf, [raw, gt_lbl]))
+    p.start()
+    processes.append(p)
+    time.sleep(1)
 
     for rank in range(0, args.workers):
         p = mp.Process(

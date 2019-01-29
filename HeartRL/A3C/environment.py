@@ -12,6 +12,8 @@ import copy
 import math
 from gym.spaces import Box, Discrete, Tuple
 
+DEBUG = True
+
 def get_center (lbl_img):
     ske = skeletonize (lbl_img == 255)
     index_list = np.where (ske)
@@ -93,11 +95,11 @@ class EM_env:
         action_index = self.int2index (action, self.agent_out_shape)
         center_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
 
-        print ("BEGIN ----------------------")
-        print ("action: ", action)
-        print ('valid:', self.valid_range)
-        print (action_index)
-        print (center_index)
+        # print ("BEGIN ----------------------")
+        # print ("action: ", action)
+        # print ('valid:', self.valid_range)
+        # print (action_index)
+        # print (center_index)
 
         state.start = [center_index [0] - self.local_wd_size [0] // 2, center_index [1] - self.local_wd_size [0] // 2]
         state.size = self.local_wd_size
@@ -120,12 +122,16 @@ class EM_env:
     def reset (self):
         # print (self.raw_list)
         img_id = self.rng.randint (len (self.raw_list))
+        if DEBUG:
+            img_id = 0
         self.raw = self.raw_list [img_id]
         self.lbl = self.lbl_list [img_id]
         self.target = get_center (self.lbl)
         max_mov_dist = self.max_mov_dist
         mov_dist = (self.rng.randint (-max_mov_dist, max_mov_dist + 1), 
             self.rng.randint (-max_mov_dist, max_mov_dist + 1))
+        if DEBUG:
+            mov_dist = (0, 0)
         self.target [0] -= mov_dist[0]; self.target[1] -= mov_dist[1]
         self.state = State (0, [0, 0], self.raw.shape, img_id, self.target, mov_dist)
         self.cur_dist = distance (self.get_cen (), self.target)
