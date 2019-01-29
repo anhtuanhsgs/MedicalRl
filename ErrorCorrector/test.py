@@ -31,6 +31,7 @@ def test (args, shared_model, env_conf, datasets, rank=-1):
     player = Agent (None, env, args, None)
     player.gpu_id = gpu_id
     player.model = A3Clstm (env.observation_space.shape, env_conf["num_action"], args.hidden_feat)
+    player.model.eval ()
 
     player.state = player.env.reset ()
     player.state = torch.from_numpy (player.state).float ()
