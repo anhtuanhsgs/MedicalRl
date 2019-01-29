@@ -69,6 +69,7 @@ class Agent (object):
                 self.hx = Variable(self.hx.data)
             value, logit, (self.hx, self.cx) = self.model((Variable(
                 self.state.unsqueeze(0)), (self.hx, self.cx)))
+            print ("value:", value, "logit: ", logit)
         prob = F.softmax (logit, dim=1)
         action = prob.max (1)[1].data.cpu ().numpy ()
 
