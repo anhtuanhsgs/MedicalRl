@@ -66,8 +66,10 @@ def test (args, shared_model, env_conf, datasets):
                 player.model.load_state_dict (shared_model.state_dict ())
             player.model.eval ()
             flag = False
-
-        player.action_test ()
+        for i in range (4):
+            player.action_test ()
+            if player.done:
+                break
         # reward_sum += player.reward
         # renderlist.append (player.env.render ()) 
 
