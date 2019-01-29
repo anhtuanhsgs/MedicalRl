@@ -72,8 +72,8 @@ class Agent (object):
         action = prob.max (1)[1].data.cpu ().numpy ()
 
         state, self.reward, self.done, self.info = self.env.step (action [0])
-        raw = state[0, 0]
-        mask = state [0, 1]
+        raw = state[0]
+        mask = state [1]
         plt.imshow (np.concatenate ([raw, mask], 1), cmap='gray')
         plt.show ()
         print ("test: action", action [0], "test: reward", self.reward)
