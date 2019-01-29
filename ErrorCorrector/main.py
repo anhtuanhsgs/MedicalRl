@@ -133,7 +133,7 @@ parser.add_argument(
 parser.add_argument(
     '--log-period',
     type=int,
-    default=10,
+    default=5,
     metavar='LP',
     help='Adam optimizer amsgrad parameter')
 
