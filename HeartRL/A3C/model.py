@@ -120,7 +120,7 @@ class SimpleCNN (nn.Module):
         self.maxp3 = nn.MaxPool2d(2, 2)
         self.conv4 = nn.Conv2d(64, 64, 3, stride=1, padding=1)
         self.maxp4 = nn.MaxPool2d(2, 2)
-        num_values = input_shape[1] // (2 ** 4) * input_shape[2] // (2 ** 4) * 64
+        # num_values = input_shape[1] // (2 ** 4) * input_shape[2] // (2 ** 4) * 64
         num_values = 14400
         print (num_values)
         self.dense1 = nn.Linear (num_values, 512)
