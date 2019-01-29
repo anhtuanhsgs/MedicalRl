@@ -105,6 +105,7 @@ while not done:
     prob = F.softmax(logit, dim=1)
     log_prob = F.log_softmax(logit, dim=1)
     action = prob.max (1)[1].data.cpu ().numpy () [0]
+    action = int (input ('action = '))
 
     prob_np = prob.data.cpu ().numpy ()
     print ("______________________________")

@@ -78,7 +78,7 @@ class EM_env (gym.Env):
     def reset (self):
         self.step_cnt = 0
         z0 = self.rng.randint (0, len (self.raw_list))
-        if (DEBUG):
+        if DEBUG:
             z0 = 0
         self.raw = copy.deepcopy (self.raw_list [z0])
         self.lbl = copy.deepcopy (self.lbl_list [z0])
