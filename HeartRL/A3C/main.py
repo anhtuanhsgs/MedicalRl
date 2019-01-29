@@ -192,8 +192,8 @@ if __name__ == '__main__':
     raw, gt_lbl = setup_data (env_conf)
 
     # env =EM_env (raw, lbl, prob, env_conf, 'train', gt_lbl)
-    shared_model = A3Clstm (env_conf ["observation_shape"], 
-                        env_conf["num_action"], args.hidden_feat)
+    # shared_model = A3Clstm (env_conf ["observation_shape"], env_conf["num_action"], args.hidden_feat)
+    SimpleCNN (env_conf ["observation_shape"], env_conf["num_action"])
 
     if args.load:
         saved_state = torch.load(
