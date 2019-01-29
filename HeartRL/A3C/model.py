@@ -123,7 +123,7 @@ class SimpleCNN (nn.Module):
         num_values = input_shape[1] // (2 ** 4) * input_shape[2] // (2 ** 4) * 64
         print (num_values)
         self.dense = nn.Linear (1024, 512)
-        num_outputs = action_space.n
+        num_outputs = num_action
         self.critic_linear = nn.Linear(512, 1)
         self.actor_linear = nn.Linear(512, num_outputs)
 
