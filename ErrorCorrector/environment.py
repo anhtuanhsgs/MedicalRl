@@ -17,6 +17,8 @@ from malis import rand_index
 from random import shuffle
 
 
+DEBUG = True
+
 def rand_score (gt_lbl, pred_lbl):
     ret = adjusted_rand_score (pred_lbl.flatten (), gt_lbl.flatten ())
     print (type (ret))
@@ -76,6 +78,8 @@ class EM_env (gym.Env):
     def reset (self):
         self.step_cnt = 0
         z0 = self.rng.randint (0, len (self.raw_list))
+        if (DEBUG):
+            z0 = 0
         self.raw = copy.deepcopy (self.raw_list [z0])
         self.lbl = copy.deepcopy (self.lbl_list [z0])
         self.prob = copy.deepcopy (self.cell_prob_list [z0])
@@ -85,7 +89,7 @@ class EM_env (gym.Env):
             self.gt_lbl = copy.deepcopy (self.gt_lbl_list [z0])
 
         self.raw, self.lbl, self.prob, self.gt_lbl = self.random_crop (self.observation_shape [1:],
-                        [self.raw, self.lbl, self.prob], mask=self.gt_lbl)
+                        [self.raw, self.lbl, self.prob, self.gt_lbl])
         self.lbl = self.shuffle_lbl (self.lbl.astype (np.int32))
         self.info_mask = np.zeros_like (self.raw)
 
@@ -101,25 +105,36 @@ class EM_env (gym.Env):
         y0 = center [0] - size [0] // 2
         x0 = center [1] - size [1] // 2
         # print ('crop center', center, y0, x0)
+        if DEBUG:
+            y0 = 0
+            x0 = 0
         ret = []
         for img in imgs:
             ret += [img [y0:y0+size[0], x0:x0+size[1]]]
         return ret
 
-    def random_crop (self, size, images, mask=None):
-        stack = []
-        for img in images:
-            stack += [np.expand_dims (img, -1)]
-        stack = np.concatenate (stack, -1)
-        cropper = A.RandomCrop (height=size [0], width=size[1], p=1)
-        cropped = cropper (image=stack, mask=mask)
-        cropped_stack, mask = cropped ['image'], cropped ['mask']
-        ret = []
-        for i in range (len (images)):
-            ret += [cropped_stack [..., i]]
-        ret += [mask]
-        return ret
+    # def random_crop (self, size, images, mask=None):
+    #     stack = []
+    #     for img in images:
+    #         stack += [np.expand_dims (img, -1)]
+    #     stack = np.concatenate (stack, -1)
+    #     cropper = A.RandomCrop (height=size [0], width=size[1], p=1)
+    #     cropped = cropper (image=stack, mask=mask)
+    #     cropped_stack, mask = cropped ['image'], cropped ['mask']
+    #     ret = []
+    #     for i in range (len (images)):
+    #         ret += [cropped_stack [..., i]]
+    #     ret += [mask]
+    #     return ret
 
+    def random_crop (self, size, images):
+        full_size = images [0].shape
+        y0 = self.rng.randint (0, full_size [0])
+        x0 = self.rng.randint (0, full_size [1])
+        ret = []
+        for img in images:
+            ret += [img[y0:y0+size[0], x0:x0+size[0]]]
+        return ret
 
     def int2index (self, x, size):
         ret = ()

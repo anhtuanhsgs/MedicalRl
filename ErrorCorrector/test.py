@@ -72,8 +72,6 @@ def test (args, shared_model, env_conf, datasets):
 
         if player.done:
             flag = True
-            state = player.env.reset ()
-            player.state = torch.from_numpy (state).float ()
             if gpu_id >= 0:
                 with torch.cuda.device (gpu_id):
                     player.state = player.state.cuda ()
@@ -126,13 +124,15 @@ def test (args, shared_model, env_conf, datasets):
             renderlist = []
             reward_sum = 0
             player.eps_len = 0
-            state = player.env.reset ()
-            time.sleep (60)
-            player.stage = torch.from_numpy (state).float ()
+                       
             player.clear_actions ()
+            state = player.env.reset ()
+            player.state = torch.from_numpy (state).float ()
             if gpu_id >= 0:
                 with torch.cuda.device (gpu_id):
                     player.state = player.state.cuda ()
+
+            time.sleep (30)
 
 
 
