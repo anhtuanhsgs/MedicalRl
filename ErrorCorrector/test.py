@@ -16,7 +16,7 @@ def test (args, shared_model, env_conf, datasets, rank=-1):
     ptitle('Training Agent: {}'.format(rank))
     print ('Start training agent: ', rank)
     
-    if rank = -1:
+    if rank == -1:
         logger = Logger (args.log_dir)
         train_step = 0
 
@@ -41,7 +41,7 @@ def test (args, shared_model, env_conf, datasets, rank=-1):
             player.model = player.model.cuda ()
     player.model.train ()
 
-    if rank = -1:
+    if rank == -1:
         eps_reward = 0
         pinned_eps_reward = 0
         mean_log_prob = 0
@@ -58,7 +58,7 @@ def test (args, shared_model, env_conf, datasets, rank=-1):
         
         if player.done:
             player.eps_len = 0
-            if rank = -1:
+            if rank == -1:
                 # if log_train_period <= train_step < log_train_period + 6:
                 print ("test: eps_reward", eps_reward) 
                     # if train_step > log_train_period + 6:
@@ -79,7 +79,7 @@ def test (args, shared_model, env_conf, datasets, rank=-1):
 
         for step in range(args.num_steps):
             player.action_train()
-            if rank = -1:
+            if rank == -1:
                 # if log_train_period <= train_step < log_train_period + 6:
                 # print ("action = ", player.action)
                 eps_reward += player.reward
@@ -134,7 +134,7 @@ def test (args, shared_model, env_conf, datasets, rank=-1):
         # optimizer.step ()
         # player.clear_actions ()
 
-        if rank = -1:
+        if rank == -1:
             train_step += 1
             if train_step % args.log_period == 0:
                 log_info = {
