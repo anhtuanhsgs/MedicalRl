@@ -60,7 +60,7 @@ def test (args, shared_model, env_conf, datasets):
         if flag:
             if gpu_id >= 0:
                 with torch.cuda.device (gpu_id):
-                    print ("test load")
+                    print ("-------------- test load -----------------")
                     player.model.load_state_dict (shared_model.state_dict ())
             else:
                 player.model.load_state_dict (shared_model.state_dict ())
@@ -73,54 +73,54 @@ def test (args, shared_model, env_conf, datasets):
 
         if player.done:
             flag = True
-            if gpu_id >= 0:
-                with torch.cuda.device (gpu_id):
-                    player.state = player.state.cuda ()
+            # if gpu_id >= 0:
+            #     with torch.cuda.device (gpu_id):
+            #         player.state = player.state.cuda ()
 
-            num_tests += 1
-            reward_total_sum += reward_sum
-            reward_mean = reward_total_sum / num_tests
-            log ['{}_log'.format (args.env)].info (
-                "Time {0}, episode reward {1}, num tests {4}, episode length {2}, reward mean {3:.4f}".
-                format (
-                    time.strftime ("%Hh %Mm %Ss", time.gmtime (time.time () - start_time)),
-                    reward_sum, player.eps_len, reward_mean, num_tests))
+            # num_tests += 1
+            # reward_total_sum += reward_sum
+            # reward_mean = reward_total_sum / num_tests
+            # log ['{}_log'.format (args.env)].info (
+            #     "Time {0}, episode reward {1}, num tests {4}, episode length {2}, reward mean {3:.4f}".
+            #     format (
+            #         time.strftime ("%Hh %Mm %Ss", time.gmtime (time.time () - start_time)),
+            #         reward_sum, player.eps_len, reward_mean, num_tests))
 
-            recent_episode_scores += [reward_sum]
-            if len (recent_episode_scores) > 200:
-                recent_episode_scores.pop (0)
+            # recent_episode_scores += [reward_sum]
+            # if len (recent_episode_scores) > 200:
+            #     recent_episode_scores.pop (0)
 
-            if args.save_max and np.mean (recent_episode_scores) >= max_score:
-                max_score = np.mean (recent_episode_scores)
-                if gpu_id >= 0:
-                    with torch.cuda.device (gpu_id):
-                        state_to_save = player.model.state_dict ()
-                        torch.save (state_to_save, '{0}{1}.dat'.format (args.save_model_dir, 'best_model_' + args.env))
+            # if args.save_max and np.mean (recent_episode_scores) >= max_score:
+            #     max_score = np.mean (recent_episode_scores)
+            #     if gpu_id >= 0:
+            #         with torch.cuda.device (gpu_id):
+            #             state_to_save = player.model.state_dict ()
+            #             torch.save (state_to_save, '{0}{1}.dat'.format (args.save_model_dir, 'best_model_' + args.env))
 
-            if num_tests % args.save_period == 0:
-                if gpu_id >= 0:
-                    with torch.cuda.device (gpu_id):
-                        state_to_save = player.model.state_dict ()
-                        torch.save (state_to_save, '{0}{1}.dat'.format (args.save_model_dir, args.env + '_' + str (num_tests)))
+            # if num_tests % args.save_period == 0:
+            #     if gpu_id >= 0:
+            #         with torch.cuda.device (gpu_id):
+            #             state_to_save = player.model.state_dict ()
+            #             torch.save (state_to_save, '{0}{1}.dat'.format (args.save_model_dir, args.env + '_' + str (num_tests)))
 
-            if num_tests % args.log_period == 0:
-                print ("------------------------------------------------")
-                print ("Log test #:", num_tests)
-                print ("Actions :", player.actions)
-                print ("Actions transformed: ")
-                print (player.actions_explained)
-                print ("rewards: ", player.rewards)
-                print ("sum rewards: ", reward_sum)
-                print ("------------------------------------------------")
-                log_img = np.concatenate (renderlist, 0)
-                log_info = {"traning_sample": log_img}
-                for tag, img in log_info.items ():
-                    img = img [None]
-                    logger.image_summary (tag, img, num_tests)
+            # if num_tests % args.log_period == 0:
+            #     print ("------------------------------------------------")
+            #     print ("Log test #:", num_tests)
+            #     print ("Actions :", player.actions)
+            #     print ("Actions transformed: ")
+            #     print (player.actions_explained)
+            #     print ("rewards: ", player.rewards)
+            #     print ("sum rewards: ", reward_sum)
+            #     print ("------------------------------------------------")
+            #     log_img = np.concatenate (renderlist, 0)
+            #     log_info = {"traning_sample": log_img}
+            #     for tag, img in log_info.items ():
+            #         img = img [None]
+            #         logger.image_summary (tag, img, num_tests)
 
-                log_info = {'mean_reward': reward_mean}
-                for tag, value in log_info.items ():
-                    logger.scalar_summary (tag, value, num_tests)
+            #     log_info = {'mean_reward': reward_mean}
+            #     for tag, value in log_info.items ():
+            #         logger.scalar_summary (tag, value, num_tests)
 
             renderlist = []
             reward_sum = 0
