@@ -103,6 +103,7 @@ class EM_env:
         # print ('start: ', state.start)
         # print ("size: ", state.size)
         reward = (max_dist - 1.0 * distance (center_index, state.target)) / max_dist * max_reward
+        print ("reward:", reward)
         if reward < max_reward * threshold_ratio:
             reward = 0.0
         self.set_state (state)
