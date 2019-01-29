@@ -35,6 +35,7 @@ class Agent (object):
         entropy = -(log_prob * prob).sum(1)
         self.entropies.append(entropy)
         action = prob.multinomial(1).data
+        print ("action = ", action)
         self.action = action.cpu().numpy() [0][0]
         log_prob = log_prob.gather(1, Variable(action))
         state, self.reward, self.done, self.info = self.env.step(
