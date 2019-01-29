@@ -122,7 +122,7 @@ class SimpleCNN (nn.Module):
         self.maxp4 = nn.MaxPool2d(2, 2)
         # num_values = input_shape[1] // (2 ** 4) * input_shape[2] // (2 ** 4) * 64
         num_values = 14400
-        print (num_values)
+        # print (num_values)
         self.dense1 = nn.Linear (num_values, 512)
         self.dense2 = nn.Linear (512, 1024)
         self.dense3 = nn.Linear (1024, 512)

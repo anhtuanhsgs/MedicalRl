@@ -107,6 +107,7 @@ def test (args, shared_model, env_conf, datasets):
             if num_tests % args.log_period == 0:
                 print ("------------------------------------------------")
                 print ("Log test #:", num_tests)
+                print ("Prob: ", player.prob_cpu)
                 print ("Actions :", player.actions)
                 print ("Actions transformed: ")
                 print (player.actions_explained)

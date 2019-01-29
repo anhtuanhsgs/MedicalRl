@@ -25,6 +25,7 @@ class Agent (object):
         self.entropies = []
         self.actions = []
         self.actions_explained = []
+        self.prob_cpu
 
     def action_train (self):
         # value, logit, (self.hx, self.cx) = self.model((Variable(self.state.unsqueeze(0)), (self.hx, self.cx)))
@@ -66,6 +67,9 @@ class Agent (object):
             #     self.hx = Variable(self.hx.data)
             value, logit = self.model(Variable(self.state.unsqueeze(0)))
         prob = F.softmax (logit, dim=1)
+        prob_cpu = prob.cpu ().numpy ()
+        prob_cpu = prob_cpu.reshape (self.env.agent_out_shape)
+        self.prob_cpu = self.prob_cpu
         action = prob.max (1)[1].data.cpu ().numpy ()
         state, self.reward, self.done, self.info = self.env.step (action [0])
         self.rewards.append (self.reward)
