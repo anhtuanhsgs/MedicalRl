@@ -168,5 +168,5 @@ if __name__ == "__main__":
     a_t = torch.tensor (a, dtype=torch.float32)
     cx = torch.zeros(1, 512)
     hx = torch.zeros(1, 512)
-    b, c = model ((a_t, (hx, cx)))
+    b, c, (hx, cx) = model ((a_t, (hx, cx)))
     print (b.shape, c.shape)
