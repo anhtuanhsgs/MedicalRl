@@ -144,6 +144,6 @@ if __name__ == '__main__':
     model = SimpleCNN ((1, 256, 256), 8*8*2)
     a = np.ones ((1, 256, 256))
     a_t = torch.tensor (a, dtype=torch.float32)
-    b = model (a)
+    b = model (a_t)
     print (b.shape)
     
