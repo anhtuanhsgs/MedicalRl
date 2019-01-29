@@ -129,8 +129,8 @@ class EM_env (gym.Env):
 
     def random_crop (self, size, images):
         full_size = images [0].shape
-        y0 = self.rng.randint (0, full_size [0])
-        x0 = self.rng.randint (0, full_size [1])
+        y0 = self.rng.randint (0, full_size [0] - size [0])
+        x0 = self.rng.randint (0, full_size [1] - size [1])
         ret = []
         for img in images:
             ret += [img[y0:y0+size[0], x0:x0+size[0]]]

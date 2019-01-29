@@ -88,8 +88,8 @@ class A3Clstm(torch.nn.Module):
         self.train()
 
     def forward(self, inputs):
-        inputs, (hx, cx) = inputs
-        x = inputs / 255.0
+        x, (hx, cx) = inputs
+        x = x / 255.0
         x = F.relu(self.norm1 (self.maxp1(self.conv1(x))))
         x = F.relu(self.norm2 (self.maxp2(self.conv2(x))))
         x = F.relu(self.norm3 (self.maxp3(self.conv3(x))))
@@ -163,7 +163,7 @@ class A3Clstm(torch.nn.Module):
 #     return model
 
 if __name__ == "__main__":
-    model = A3Clstm ((1, 256, 256), 8*8*2, hidden_feat=512)
+    model = A3Clstm ((1, 256, 256), 8*8*1, hidden_feat=512)
     a = np.ones ((1, 1, 256, 256))
     a_t = torch.tensor (a, dtype=torch.float32)
     cx = torch.zeros(1, 512)
