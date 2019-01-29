@@ -17,7 +17,7 @@ from malis import rand_index
 from random import shuffle
 
 
-DEBUG = False
+DEBUG = True
 
 def rand_score (gt_lbl, pred_lbl):
     ret = adjusted_rand_score (pred_lbl.flatten (), gt_lbl.flatten ())
