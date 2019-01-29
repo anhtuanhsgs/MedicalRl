@@ -94,7 +94,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
                 with torch.cuda.device (gpu_id):
                     player.state = player.state.cuda ()
 
-       R = torch.zeros(1, 1)
+        R = torch.zeros(1, 1)
         if not player.done:
             value, _ = player.model(Variable(player.state.unsqueeze(0)))
             R = value.data

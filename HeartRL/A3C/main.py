@@ -132,7 +132,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--shared-optimizer',
-    default=False,
+    default=True,
     metavar='SO',
     help='use an optimizer without shared statistics.')
 
