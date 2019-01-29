@@ -133,7 +133,7 @@ def test (args, shared_model, env_conf, datasets, rank=-1):
         # sum_loss.backward ()
         # ensure_shared_grads (player.model, shared_model, gpu=gpu_id >= 0)
         # optimizer.step ()
-        # player.clear_actions ()
+        player.clear_actions ()
 
         if rank == -1:
             train_step += 1
