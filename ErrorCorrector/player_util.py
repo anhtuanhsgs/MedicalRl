@@ -54,6 +54,7 @@ class Agent (object):
     def action_test (self):
         with torch.no_grad():
             if self.done:
+                print ("re load")
                 if self.gpu_id >= 0:
                     with torch.cuda.device(self.gpu_id):
                         self.cx = Variable(
@@ -72,10 +73,10 @@ class Agent (object):
         action = prob.max (1)[1].data.cpu ().numpy ()
 
         state, self.reward, self.done, self.info = self.env.step (action [0])
-        raw = state[0]
-        mask = state [1]
-        plt.imshow (np.concatenate ([raw, mask], 1), cmap='gray')
-        plt.show ()
+        # raw = state[0]
+        # mask = state [1]
+        # plt.imshow (np.concatenate ([raw, mask], 1), cmap='gray')
+        # plt.show ()
         print ("test: action", action [0], "test: reward", self.reward)
         self.rewards.append (self.reward)
         self.actions.append (action [0])
