@@ -112,7 +112,7 @@ def vgg16lstm (**kwargs):
 class SimpleCNN (nn.Module):
     def __init__(self, input_shape, num_action):
         super(SimpleCNN, self).__init__()
-        self.conv1 = nn.Conv2d(num_inputs, 32, 5, stride=1, padding=2)
+        self.conv1 = nn.Conv2d(input_shape [0], 32, 5, stride=1, padding=2)
         self.maxp1 = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(32, 32, 5, stride=1, padding=1)
         self.maxp2 = nn.MaxPool2d(2, 2)
