@@ -63,10 +63,10 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
         if player.done:
             player.eps_len = 0
             if rank == 0:
-                if log_train_period <= train_step < log_train_period + 6:
-                    print ("train: eps_reward", eps_reward)
-                    if train_step > log_train_period + 6:
-                        log_train_period += 30
+                # if log_train_period <= train_step < log_train_period + 6:
+                print ("train: eps_reward", eps_reward) 
+                    # if train_step > log_train_period + 6:
+                    #     log_train_period += 30
                 pinned_eps_reward = eps_reward
                 eps_reward = 0
                 mean_log_prob = 0
@@ -84,8 +84,8 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
         for step in range(args.num_steps):
             player.action_train()
             if rank == 0:
-                if log_train_period <= train_step < log_train_period + 6:
-                    print ("action = ", player.action)
+                # if log_train_period <= train_step < log_train_period + 6:
+                # print ("action = ", player.action)
                 eps_reward += player.reward
                 mean_log_prob += player.log_probs [-1] / env_conf ["T"]
             if player.done:
