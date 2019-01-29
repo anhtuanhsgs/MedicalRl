@@ -32,6 +32,7 @@ class Agent (object):
         value, logit, (self.hx, self.cx) = self.model((Variable(
             self.state.unsqueeze(0)), (self.hx, self.cx)))
         prob = F.softmax(logit, dim=1)
+        print ("train: prob", prob)
         log_prob = F.log_softmax(logit, dim=1)
         entropy = -(log_prob * prob).sum(1)
         self.entropies.append(entropy)
