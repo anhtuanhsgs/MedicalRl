@@ -103,6 +103,8 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
         R = Variable(R)
         print ("updating -------------------")
         print ("values:", player.values)
+        print ("gamma:", args.gamma)
+        print ("rewards:", player.rewards)
         for i in reversed(range(len(player.rewards))):
             R = args.gamma * R + player.rewards[i]
             advantage = R - player.values[i]
@@ -124,7 +126,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
         # sum_loss.backward ()
         # ensure_shared_grads (player.model, shared_model, gpu=gpu_id >= 0)
         # optimizer.step ()
-        # player.clear_actions ()
+        player.clear_actions ()
 
         if rank == 0:
             train_step += 1
