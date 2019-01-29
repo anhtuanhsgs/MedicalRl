@@ -12,7 +12,7 @@ import copy
 import math
 from gym.spaces import Box, Discrete, Tuple
 
-DEBUG = True
+DEBUG = False
 
 def get_center (lbl_img):
     ske = skeletonize (lbl_img == 255)
