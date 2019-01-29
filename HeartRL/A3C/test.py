@@ -49,6 +49,7 @@ def test (args, shared_model, env_conf, datasets):
             player.model = player.model.cuda ()
             player.state = player.state.cuda ()
 
+    flag = True
     create_dir (args.save_model_dir)
 
     recent_episode_scores = []
@@ -58,20 +59,20 @@ def test (args, shared_model, env_conf, datasets):
     while True:
         if flag:
             if gpu_id >= 0:
-                with torch.cuda.device (gpu_id): 
-                    print ("loaded test")                   
+                print ("test load")
+                with torch.cuda.device (gpu_id):                    
                     player.model.load_state_dict (shared_model.state_dict ())
             else:
                 player.model.load_state_dict (shared_model.state_dict ())
             player.model.eval ()
+            flag = False
 
         player.action_test ()
         reward_sum += player.reward
         renderlist.append (player.env.render ()) 
 
         if player.done:
-            state = player.env.reset ()
-            player.state = torch.from_numpy (state).float ()
+            flag = True
             if gpu_id >= 0:
                 with torch.cuda.device (gpu_id):
                     player.state = player.state.cuda ()
@@ -129,14 +130,13 @@ def test (args, shared_model, env_conf, datasets):
             renderlist = []
             reward_sum = 0
             player.eps_len = 0
-            state = player.env.reset ()
-            player.stage = torch.from_numpy (state).float ()
+            time.sleep (30)
             player.clear_actions ()
+            state = player.env.reset ()
+            player.state = torch.from_numpy (state).float ()
             if gpu_id >= 0:
                 with torch.cuda.device (gpu_id):
                     player.state = player.state.cuda ()
-
-            time.sleep (30)
 
 
 
