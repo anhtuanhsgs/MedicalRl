@@ -105,9 +105,7 @@ class EM_env (gym.Env):
         y0 = center [0] - size [0] // 2
         x0 = center [1] - size [1] // 2
         # print ('crop center', center, y0, x0)
-        if DEBUG:
-            y0 = 0
-            x0 = 0
+        
         ret = []
         for img in imgs:
             ret += [img [y0:y0+size[0], x0:x0+size[1]]]
@@ -131,6 +129,9 @@ class EM_env (gym.Env):
         full_size = images [0].shape
         y0 = self.rng.randint (0, full_size [0] - size [0])
         x0 = self.rng.randint (0, full_size [1] - size [1])
+        if DEBUG:
+            y0 = 0
+            x0 = 0
         ret = []
         for img in images:
             ret += [img[y0:y0+size[0], x0:x0+size[0]]]
