@@ -27,8 +27,8 @@ class Agent (object):
         self.actions_explained = []
 
     def action_train (self):
-        value, logit, (self.hx, self.cx) = self.model((Variable(
-            self.state.unsqueeze(0)), (self.hx, self.cx)))
+        # value, logit, (self.hx, self.cx) = self.model((Variable(self.state.unsqueeze(0)), (self.hx, self.cx)))
+        value, logit= self.model(Variable(self.state.unsqueeze(0)))
         prob = F.softmax(logit, dim=1)
         log_prob = F.log_softmax(logit, dim=1)
         entropy = -(log_prob * prob).sum(1)
@@ -51,21 +51,20 @@ class Agent (object):
 
     def action_test (self):
         with torch.no_grad():
-            if self.done:
-                if self.gpu_id >= 0:
-                    with torch.cuda.device(self.gpu_id):
-                        self.cx = Variable(
-                            torch.zeros(1, self.args.hidden_feat).cuda())
-                        self.hx = Variable(
-                            torch.zeros(1, self.args.hidden_feat).cuda())
-                else:
-                    self.cx = Variable(torch.zeros(1, self.args.hidden_feat))
-                    self.hx = Variable(torch.zeros(1, self.args.hidden_feat))
-            else:
-                self.cx = Variable(self.cx.data)
-                self.hx = Variable(self.hx.data)
-            value, logit, (self.hx, self.cx) = self.model((Variable(
-                self.state.unsqueeze(0)), (self.hx, self.cx)))
+            # if self.done:
+            #     if self.gpu_id >= 0:
+            #         with torch.cuda.device(self.gpu_id):
+            #             self.cx = Variable(
+            #                 torch.zeros(1, self.args.hidden_feat).cuda())
+            #             self.hx = Variable(
+            #                 torch.zeros(1, self.args.hidden_feat).cuda())
+            #     else:
+            #         self.cx = Variable(torch.zeros(1, self.args.hidden_feat))
+            #         self.hx = Variable(torch.zeros(1, self.args.hidden_feat))
+            # else:
+            #     self.cx = Variable(self.cx.data)
+            #     self.hx = Variable(self.hx.data)
+            value, logit = self.model(Variable(self.state.unsqueeze(0)))
         prob = F.softmax (logit, dim=1)
         action = prob.max (1)[1].data.cpu ().numpy ()
         state, self.reward, self.done, self.info = self.env.step (action [0])

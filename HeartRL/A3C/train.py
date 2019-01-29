@@ -37,7 +37,8 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
         # env.seed (args.seed + rank)
     player = Agent (None, env, args, None)
     player.gpu_id = gpu_id
-    player.model = A3Clstm (env.observation_space.shape, env_conf["num_action"], args.hidden_feat)
+    # player.model = A3Clstm (env.observation_space.shape, env_conf["num_action"], args.hidden_feat)
+    player.model = SimpleCNN (env.observation_space.shape, env_conf["num_action"])
 
     player.state = player.env.reset ()
     player.state = torch.from_numpy (player.state).float ()
@@ -66,16 +67,16 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
                 pinned_eps_reward = eps_reward
                 eps_reward = 0
                 mean_log_prob = 0
-            if gpu_id >= 0:
-                with torch.cuda.device(gpu_id):
-                    player.cx = Variable(torch.zeros(1, args.hidden_feat).cuda())
-                    player.hx = Variable(torch.zeros(1, args.hidden_feat).cuda())
-            else:
-                player.cx = Variable(torch.zeros(1, args.hidden_feat))
-                player.hx = Variable(torch.zeros(1, args.hidden_feat))
-        else:
-            player.cx = Variable(player.cx.data)
-            player.hx = Variable(player.hx.data)
+            # if gpu_id >= 0:
+            #     with torch.cuda.device(gpu_id):
+            #         player.cx = Variable(torch.zeros(1, args.hidden_feat).cuda())
+            #         player.hx = Variable(torch.zeros(1, args.hidden_feat).cuda())
+            # else:
+            #     player.cx = Variable(torch.zeros(1, args.hidden_feat))
+            #     player.hx = Variable(torch.zeros(1, args.hidden_feat))
+        # else:
+        #     player.cx = Variable(player.cx.data)
+        #     player.hx = Variable(player.hx.data)
 
         for step in range(args.num_steps):
             player.action_train()
@@ -95,10 +96,9 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
 
         R = torch.zeros (1, 1)
         if not player.done:
-            value, _, _ = player.model((Variable(player.state.unsqueeze(0)),
-                                        (player.hx, player.cx)))
+            # value, _, _ = player.model((Variable(player.state.unsqueeze(0)), (player.hx, player.cx)))
+            value, _ = player.model(Variable(player.state.unsqueeze(0)))
             R = value.data
-
 
         if gpu_id >= 0:
             with torch.cuda.device (gpu_id):

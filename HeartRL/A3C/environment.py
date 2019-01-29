@@ -3,7 +3,6 @@ from skimage.measure import label
 from skimage.morphology import skeletonize
 from scipy.ndimage.morphology import binary_erosion
 import malis
-import random
 from collections import namedtuple
 import skimage.io as io
 import os, sys, argparse, glob
@@ -53,6 +52,7 @@ class EM_env:
         self.setup_conf ()
         self.action_space = Discrete(np.prod (self.agent_out_shape))
         self.observation_space = Box (0.0, 255.0, shape=self.observation_shape, dtype=np.float32)
+        self.rng = np.random.RandomState(time_seed ())
         self.reset ()
 
     def setup_conf (self):
@@ -108,21 +108,21 @@ class EM_env:
         return self.observation (), reward, done, info
 
 
-    def sample_action (self):
-        return random.randint (0, 4)
+    # def sample_action (self):
+    #     return self.rng.random.randint (0, 5)
 
     def get_cen (self):
         return self.state.center ()
 
     def reset (self):
         # print (self.raw_list)
-        img_id = np.random.randint (len (self.raw_list))
+        img_id = self.rng.random.randint (len (self.raw_list))
         self.raw = self.raw_list [img_id]
         self.lbl = self.lbl_list [img_id]
         self.target = get_center (self.lbl)
         max_mov_dist = self.max_mov_dist
-        mov_dist = (np.random.randint (-max_mov_dist, max_mov_dist + 1), 
-            np.random.randint (-max_mov_dist, max_mov_dist + 1))
+        mov_dist = (self.rng.random.randint (-max_mov_dist, max_mov_dist + 1), 
+            self.rng.random.randint (-max_mov_dist, max_mov_dist + 1))
         self.target [0] -= mov_dist[0]; self.target[1] -= mov_dist[1]
         self.state = State (0, [0, 0], self.raw.shape, img_id, self.target, mov_dist)
         self.cur_dist = distance (self.get_cen (), self.target)
