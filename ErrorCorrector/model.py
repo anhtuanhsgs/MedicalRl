@@ -161,7 +161,7 @@ class A3Clstm(torch.nn.Module):
 #     model = VGGlstm(make_layers(cfg['D']), **kwargs)
 #     return model
 
-if __main__ == "__main__":
+if __name__ == "__main__":
     model = A3Clstm ((1, 256, 256), 8*8*2, hidden_feat=512)
     a = np.ones ((1, 1, 256, 256))
     a_t = torch.tensor (a, dtype=torch.float32)
