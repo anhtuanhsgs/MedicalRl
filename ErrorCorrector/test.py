@@ -68,8 +68,8 @@ def test (args, shared_model, env_conf, datasets):
             flag = False
 
         player.action_test ()
-        reward_sum += player.reward
-        renderlist.append (player.env.render ()) 
+        # reward_sum += player.reward
+        # renderlist.append (player.env.render ()) 
 
         if player.done:
             flag = True

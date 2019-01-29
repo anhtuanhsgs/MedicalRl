@@ -2,6 +2,8 @@ from __future__ import division
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
+import matplotlib.pyplot as plt
+import numpy as np
 
 class Agent (object):
     def __init__ (self, model, env, args, state):
@@ -70,6 +72,10 @@ class Agent (object):
         action = prob.max (1)[1].data.cpu ().numpy ()
 
         state, self.reward, self.done, self.info = self.env.step (action [0])
+        raw = state[0, 0]
+        mask = state [0, 1]
+        plt.imshow (np.concatenate ([raw, mask], 1), cmap='gray')
+        plt.show ()
         print ("test: action", action [0], "test: reward", self.reward)
         self.rewards.append (self.reward)
         self.actions.append (action [0])
