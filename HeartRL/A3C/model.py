@@ -122,7 +122,9 @@ class SimpleCNN (nn.Module):
         self.maxp4 = nn.MaxPool2d(2, 2)
         num_values = input_shape[1] // (2 ** 4) * input_shape[2] // (2 ** 4) * 64
         print (num_values)
-        self.dense = nn.Linear (1024, 512)
+        self.dense1 = nn.Linear (num_values, 512)
+        self.dense2 = nn.Linear (512, 1024)
+        self.dense3 = nn.Linear (1024, 512)
         num_outputs = num_action
         self.critic_linear = nn.Linear(512, 1)
         self.actor_linear = nn.Linear(512, num_outputs)
@@ -136,14 +138,16 @@ class SimpleCNN (nn.Module):
 
         x = x.view(x.size(0), -1)
 
-        hx, cx = self.dense(x)
+        x = self.dense1 (x)
+        x = self.dense2 (x)
+        x = self.dense3 (x)
 
-        return self.critic_linear(x), self.actor_linear(x), (hx, cx)
+        return self.critic_linear(x), self.actor_linear(x)
 
 if __name__ == '__main__':
     model = SimpleCNN ((1, 256, 256), 8*8*2)
     a = np.ones ((1, 256, 256))
     a_t = torch.tensor (a, dtype=torch.float32)
-    b = model (a_t)
-    print (b.shape)
+    b, c = model (a_t)
+    print (b.shape, c.shape)
     
