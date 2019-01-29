@@ -119,12 +119,12 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
                 Variable(gae) - 0.01 * player.entropies[i]
 
 
-        player.model.zero_grad ()
-        sum_loss = (policy_loss + value_loss)
-        sum_loss.backward ()
-        ensure_shared_grads (player.model, shared_model, gpu=gpu_id >= 0)
-        optimizer.step ()
-        player.clear_actions ()
+        # player.model.zero_grad ()
+        # sum_loss = (policy_loss + value_loss)
+        # sum_loss.backward ()
+        # ensure_shared_grads (player.model, shared_model, gpu=gpu_id >= 0)
+        # optimizer.step ()
+        # player.clear_actions ()
 
         if rank == 0:
             train_step += 1
