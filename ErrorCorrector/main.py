@@ -63,14 +63,14 @@ parser.add_argument(
 parser.add_argument(
     '--num-steps',
     type=int,
-    default=4,
+    default=1,
     metavar='NS',
     help='number of forward steps in A3C (default: 20)')
 
 parser.add_argument(
     '--max-episode-length',
     type=int,
-    default=41234,
+    default=4,
     metavar='M',
     help='maximum length of an episode (default: 10000)')
 
