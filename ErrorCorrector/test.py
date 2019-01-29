@@ -60,7 +60,7 @@ def test (args, shared_model, env_conf, datasets, rank=-1):
             player.eps_len = 0
             if rank = -1:
                 # if log_train_period <= train_step < log_train_period + 6:
-                print ("train: eps_reward", eps_reward) 
+                print ("test: eps_reward", eps_reward) 
                     # if train_step > log_train_period + 6:
                     #     log_train_period += 30
                 pinned_eps_reward = eps_reward
@@ -139,11 +139,11 @@ def test (args, shared_model, env_conf, datasets, rank=-1):
             if train_step % args.log_period == 0:
                 log_info = {
                     # 'train: sum_loss': sum_loss, 
-                    'train: value_loss': value_loss, 
-                    'train: policy_loss': policy_loss, 
-                    'train: advanage': advantage,
+                    'test: value_loss': value_loss, 
+                    'test: policy_loss': policy_loss, 
+                    'test: advanage': advantage,
                     # 'train: entropy': entropy,
-                    'train: eps reward': pinned_eps_reward,
+                    'test: eps reward': pinned_eps_reward,
                     # 'train: mean log prob': mean_log_prob
                 }
 
