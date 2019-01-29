@@ -70,7 +70,7 @@ class Agent (object):
                 self.hx = Variable(self.hx.data)
             value, logit, (self.hx, self.cx) = self.model((Variable(
                 self.state.unsqueeze(0)), (self.hx, self.cx)))
-            print ("value:", value, "logit: ", logit)
+            
         prob = F.softmax (logit, dim=1)
         action = prob.max (1)[1].data.cpu ().numpy ()
 
@@ -79,6 +79,7 @@ class Agent (object):
         # mask = state [1]
         # plt.imshow (np.concatenate ([raw, mask], 1), cmap='gray')
         # plt.show ()
+        print ("test: prob", prob)
         print ("test: action", action [0], "test: reward", self.reward)
         self.rewards.append (self.reward)
         self.actions.append (action [0])
