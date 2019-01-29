@@ -130,8 +130,8 @@ class EM_env:
         max_mov_dist = self.max_mov_dist
         mov_dist = (self.rng.randint (-max_mov_dist, max_mov_dist + 1), 
             self.rng.randint (-max_mov_dist, max_mov_dist + 1))
-        if DEBUG:
-            mov_dist = (0, 0)
+        # if DEBUG:
+        #     mov_dist = (0, 0)
         self.target [0] -= mov_dist[0]; self.target[1] -= mov_dist[1]
         self.state = State (0, [0, 0], self.raw.shape, img_id, self.target, mov_dist)
         self.cur_dist = distance (self.get_cen (), self.target)
