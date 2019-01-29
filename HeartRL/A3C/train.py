@@ -83,7 +83,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
             # print ('step: ', step, 'reward_len: ', len (player.rewards))
             if rank == 0:
                 eps_reward += player.reward
-                mean_log_prob += player.log_probs [-1] 
+                # mean_log_prob += player.log_probs [-1] 
             if player.done:
                 break
 
@@ -94,56 +94,38 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
                 with torch.cuda.device (gpu_id):
                     player.state = player.state.cuda ()
 
-        R = torch.zeros (1, 1)
+       R = torch.zeros(1, 1)
         if not player.done:
-            # value, _, _ = player.model((Variable(player.state.unsqueeze(0)), (player.hx, player.cx)))
             value, _ = player.model(Variable(player.state.unsqueeze(0)))
             R = value.data
 
         if gpu_id >= 0:
-            with torch.cuda.device (gpu_id):
-                player.values.append(Variable(R).cuda ())
-        else:
-            player.values.append(Variable(R))
+            with torch.cuda.device(gpu_id):
+                R = R.cuda()
 
+        player.values.append(Variable(R))
         policy_loss = 0
         value_loss = 0
         gae = torch.zeros(1, 1)
-
         if gpu_id >= 0:
-            with torch.cuda.device (gpu_id):
-                gae = gae.cuda ()
-
-        R = Variable (R)
-        if gpu_id >= 0:
-            with torch.cuda.device (gpu_id):
-                R = R.cuda ()
-
-        # print ("len values: ", len (player.values))
-
+            with torch.cuda.device(gpu_id):
+                gae = gae.cuda()
+        R = Variable(R)
         for i in reversed(range(len(player.rewards))):
-            # print ("_____R", R)
-            # print ("_____reward_i", player.values[i])
-            R = gamma * R + player.rewards[i]
-            # print ("R", R)
-            # print ("values_i", player.values[i])
+            R = args.gamma * R + player.rewards[i]
             advantage = R - player.values[i]
-            # value_loss = value_loss + F.smooth_l1_loss (input=player.values[i], target=R)
-            value_loss = value_loss + advantage.pow (2)
+            value_loss = value_loss + 0.5 * advantage.pow(2)
 
             # Generalized Advantage Estimataion
-            # print ('reward_i', player.rewards [i])
-            # print ('values_i_1', player.values [i + 1].data)
-            # print ('values_i', player.values [i].data)
-            # print ('gamma', gamma)
-            # print ('gae', gae)
-            delta_t = player.rewards[i] 
-            tmp = gamma * player.values[i + 1].data
-            delta_t = delta_t + tmp
-            delta_t = - player.values[i].data
-            gae = gae * gamma * args.tau + delta_t
-            policy_loss = policy_loss - player.log_probs[i] * Variable(gae) - 0.05 * player.entropies[i]
-            entropy = player.entropies [i]
+            delta_t = player.rewards[i] + args.gamma * \
+                player.values[i + 1].data - player.values[i].data
+
+            gae = gae * args.gamma * args.tau + delta_t
+
+            policy_loss = policy_loss - \
+                player.log_probs[i] * \
+                Variable(gae) - 0.01 * player.entropies[i]
+
 
         player.model.zero_grad ()
         sum_loss = (policy_loss + value_loss)
@@ -160,9 +142,9 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
                     'value_loss': value_loss, 
                     'policy_loss': policy_loss, 
                     'advanage': advantage,
-                    'entropy': entropy,
+                    # 'entropy': entropy,
                     'train eps reward': pinned_eps_reward,
-                    'mean log prob': mean_log_prob
+                    # 'mean log prob': mean_log_prob
                 }
 
                 for tag, value in log_info.items ():
