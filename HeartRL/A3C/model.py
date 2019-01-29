@@ -137,6 +137,7 @@ class SimpleCNN (nn.Module):
         x = F.relu(self.maxp4(self.conv4(x)))
 
         x = x.view(x.size(0), -1)
+        print (x.shape)
 
         x = self.dense1 (x)
         x = self.dense2 (x)
