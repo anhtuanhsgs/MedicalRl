@@ -120,7 +120,7 @@ class SimpleCNN (nn.Module):
         self.maxp3 = nn.MaxPool2d(2, 2)
         self.conv4 = nn.Conv2d(64, 64, 3, stride=1, padding=1)
         self.maxp4 = nn.MaxPool2d(2, 2)
-        num_values = input_shape[1] // (2 ** 4) * input_shape[2] // (2 ** 4) * 64
+        # num_values = input_shape[1] // (2 ** 4) * input_shape[2] // (2 ** 4) * 64
         print (num_values)
         self.dense1 = nn.Linear (num_values, 512)
         self.dense2 = nn.Linear (512, 1024)
@@ -132,10 +132,13 @@ class SimpleCNN (nn.Module):
     def forward(self, inputs):
         x = inputs / 255.0
         x = F.relu(self.maxp1(self.conv1(inputs)))
+        print (x.shape)
         x = F.relu(self.maxp2(self.conv2(x)))
+        print (x.shape)
         x = F.relu(self.maxp3(self.conv3(x)))
+        print (x.shape)
         x = F.relu(self.maxp4(self.conv4(x)))
-
+        print (x.shape)
         x = x.view(x.size(0), -1)
         print (x.shape)
 
