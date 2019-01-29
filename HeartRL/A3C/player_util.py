@@ -25,7 +25,7 @@ class Agent (object):
         self.entropies = []
         self.actions = []
         self.actions_explained = []
-        self.prob_cpu
+        self.prob_cpu = []
 
     def action_train (self):
         # value, logit, (self.hx, self.cx) = self.model((Variable(self.state.unsqueeze(0)), (self.hx, self.cx)))
