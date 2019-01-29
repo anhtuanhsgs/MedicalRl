@@ -126,7 +126,7 @@ def test (args, shared_model, env_conf, datasets):
             reward_sum = 0
             player.eps_len = 0
                        
-            time.sleep (30)
+            time.sleep (15)
             player.clear_actions ()
             state = player.env.reset ()
             player.state = torch.from_numpy (state).float ()
