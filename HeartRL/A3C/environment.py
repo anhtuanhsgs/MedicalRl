@@ -93,9 +93,10 @@ class EM_env:
         action_index = self.int2index (action, self.agent_out_shape)
         center_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
 
-        # print ('valid:', self.valid_range)
-        # print (action_index)
-        # print (center_index)
+        print ("action: ", action)
+        print ('valid:', self.valid_range)
+        print (action_index)
+        print (center_index)
 
         state.start = [center_index [0] - self.local_wd_size [0] // 2, center_index [1] - self.local_wd_size [0] // 2]
         state.size = self.local_wd_size
