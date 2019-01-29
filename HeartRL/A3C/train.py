@@ -101,21 +101,21 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
             with torch.cuda.device(gpu_id):
                 gae = gae.cuda()
         R = Variable(R)
-        print ("updating -------------------")
-        print ("values:", player.values)
-        print ("gamma:", args.gamma)
-        print ("rewards:", player.rewards)
+        # print ("updating -------------------")
+        # print ("values:", player.values)
+        # print ("gamma:", args.gamma)
+        # print ("rewards:", player.rewards)
         for i in reversed(range(len(player.rewards))):
             R = args.gamma * R + player.rewards[i]
             advantage = R - player.values[i]
             value_loss = value_loss + 0.5 * advantage.pow(2)
 
-            print ("advatage: ", advantage)
-            print ("value_loss: ", value_loss)
-            print ("delta_t: ", player.values[i + 1].data + player.rewards[i])
+            # print ("advatage: ", advantage)
+            # print ("value_loss: ", value_loss)
+            # print ("delta_t: ", player.values[i + 1].data + player.rewards[i])
             # Generalized Advantage Estimataion
-            delta_t = player.rewards[i] + \
-                player.values[i + 1].data - player.values[i].data
+            delta_t = player.values[i + 1].data * args.gamma + player.rewards[i] - \
+                        player.values[i].data
 
             gae = gae * args.gamma * args.tau + delta_t
 
@@ -124,11 +124,11 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
                 Variable(gae) - 0.01 * player.entropies[i]
 
 
-        # player.model.zero_grad ()
-        # sum_loss = (policy_loss + value_loss)
-        # sum_loss.backward ()
-        # ensure_shared_grads (player.model, shared_model, gpu=gpu_id >= 0)
-        # optimizer.step ()
+        player.model.zero_grad ()
+        sum_loss = (policy_loss + value_loss)
+        sum_loss.backward ()
+        ensure_shared_grads (player.model, shared_model, gpu=gpu_id >= 0)
+        optimizer.step ()
         player.clear_actions ()
 
         if rank == 0:
