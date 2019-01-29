@@ -103,7 +103,7 @@ class EM_env:
         # print ("size: ", state.size)
         reward = (max_dist - 1.0 * distance (center_index, state.target)) / max_dist * max_reward
         if reward < max_reward * threshold_ratio:
-            reward = 0
+            reward = 0.0
         self.set_state (state)
         return self.observation (), reward, done, info
 

@@ -67,16 +67,6 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
                 pinned_eps_reward = eps_reward
                 eps_reward = 0
                 mean_log_prob = 0
-            # if gpu_id >= 0:
-            #     with torch.cuda.device(gpu_id):
-            #         player.cx = Variable(torch.zeros(1, args.hidden_feat).cuda())
-            #         player.hx = Variable(torch.zeros(1, args.hidden_feat).cuda())
-            # else:
-            #     player.cx = Variable(torch.zeros(1, args.hidden_feat))
-            #     player.hx = Variable(torch.zeros(1, args.hidden_feat))
-        # else:
-        #     player.cx = Variable(player.cx.data)
-        #     player.hx = Variable(player.hx.data)
 
         for step in range(args.num_steps):
             player.action_train()
