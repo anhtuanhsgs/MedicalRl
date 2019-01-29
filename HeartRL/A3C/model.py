@@ -133,15 +133,10 @@ class SimpleCNN (nn.Module):
     def forward(self, inputs):
         x = inputs / 255.0
         x = F.relu(self.maxp1(self.conv1(inputs)))
-        print (x.shape)
         x = F.relu(self.maxp2(self.conv2(x)))
-        print (x.shape)
         x = F.relu(self.maxp3(self.conv3(x)))
-        print (x.shape)
         x = F.relu(self.maxp4(self.conv4(x)))
-        print (x.shape)
         x = x.view(x.size(0), -1)
-        print (x.shape)
 
         x = self.dense1 (x)
         x = self.dense2 (x)
