@@ -132,7 +132,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
 
         if rank == 0:
             train_step += 1
-            if train_step % (args.log_period * 1000) == 0:
+            if train_step % (args.log_period) == 0:
                 log_info = {
                     'sum_loss': sum_loss, 
                     'value_loss': value_loss, 
