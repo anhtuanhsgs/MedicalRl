@@ -123,7 +123,6 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
                 player.log_probs[i] * \
                 Variable(gae) - 0.01 * player.entropies[i]
 
-
         player.model.zero_grad ()
         sum_loss = (policy_loss + value_loss)
         sum_loss.backward ()

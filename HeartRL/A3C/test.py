@@ -107,7 +107,11 @@ def test (args, shared_model, env_conf, datasets):
             if num_tests % args.log_period == 0:
                 print ("------------------------------------------------")
                 print ("Log test #:", num_tests)
-                print ("Prob: ", player.prob_cpu)
+                print ("Prob: ")
+                for i in range (player.env.agent_out_shape [1]):
+                    for j in range (player.env.agent_out_shape [2]):
+                        print ("{:.3f}\t".format (player.prob_cpu [0, i, j]), end='')
+                    print ()
                 print ("Actions :", player.actions)
                 print ("Actions transformed: ")
                 print (player.actions_explained)
