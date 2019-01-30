@@ -180,12 +180,12 @@ def setup_env_conf (args):
         spliter = spliter_thres
 
     env_conf = {
-        "corrector_size": [128, 128], 
+        "corrector_size": [256, 256], 
         "spliter": spliter,
         "merger": merger,
         "cell_thres": int (255 * 0.5),
         "T": args.max_episode_length,
-        "agent_out_shape": [2, 6, 6],
+        "agent_out_shape": [1, 2, 2],
         "observation_shape": [2, 512, 512],
         "env_gpu": args.env_gpu
     }
