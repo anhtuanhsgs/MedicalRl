@@ -185,10 +185,8 @@ def setup_env_conf (args):
         "merger": merger,
         "cell_thres": int (255 * 0.5),
         "T": args.max_episode_length,
-        "agent_out_shape": [2, 8, 8],
-        
-        "num_action": 2 * 8 * 8,
-        "observation_shape": [2, 256, 256],
+        "agent_out_shape": [2, 5, 5],
+        "observation_shape": [2, 512, 512],
         "env_gpu": args.env_gpu
     }
 
