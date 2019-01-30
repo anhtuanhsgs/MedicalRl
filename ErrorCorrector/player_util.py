@@ -29,6 +29,7 @@ class Agent (object):
         self.actions_explained = []
 
     def action_train (self, use_max=False):
+
         value, logit, (self.hx, self.cx) = self.model((Variable(
             self.state.unsqueeze(0)), (self.hx, self.cx)))
         prob = F.softmax(logit, dim=1)
@@ -44,13 +45,17 @@ class Agent (object):
             state, self.reward, self.done, self.info = self.env.step(
                 action.cpu().numpy())
         else:
-            action = prob.multinomial(1).data
-            self.action = action.cpu().numpy() [0][0]
-            log_prob = log_prob.gather(1, Variable(action))
-            state, self.reward, self.done, self.info = self.env.step(
-                action.cpu().numpy())
-            
-        self.state = torch.from_numpy(state).float()
+            with torch.no_grad():
+                action = prob.max (1)[1].data
+                self.action = action.cpu().numpy() [0]
+                log_prob = log_prob.gather(1, Variable(action))
+                state, self.reward, self.done, self.info = self.env.step(
+                    self.action)
+        if not use_max:
+            self.state = torch.from_numpy(state).float()
+        else:
+            with torch.no_grad ():
+                self.state = torch.from_numpy(state).float()
         if self.gpu_id >= 0:
             with torch.cuda.device(self.gpu_id):
                 self.state = self.state.cuda()
