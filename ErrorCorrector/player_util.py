@@ -68,19 +68,15 @@ class Agent (object):
             else:
                 self.cx = Variable(self.cx.data)
                 self.hx = Variable(self.hx.data)
-            value, logit, (self.hx, self.cx) = self.model((Variable(
+            value, logit, (self.hx, self.cx) = self.model((Variable (
                 self.state.unsqueeze(0)), (self.hx, self.cx)))
             
         prob = F.softmax (logit, dim=1)
         action = prob.max (1)[1].data.cpu ().numpy ()
 
         state, self.reward, self.done, self.info = self.env.step (action [0])
-        # raw = state[0]
-        # mask = state [1]
-        # plt.imshow (np.concatenate ([raw, mask], 1), cmap='gray')
-        # plt.show ()
-        print ("test: prob", prob)
-        print ("test: action", action [0], "test: reward", self.reward)
+        self.state = torch.from_numpy(state).float()
+
         self.rewards.append (self.reward)
         self.actions.append (action [0])
         self.actions_explained.append (self.env.int2index (action [0], self.env.agent_out_shape))

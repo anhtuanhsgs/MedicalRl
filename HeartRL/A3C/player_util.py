@@ -74,6 +74,7 @@ class Agent (object):
         self.prob_cpu = prob_cpu
         action = prob.max (1)[1].data.cpu ().numpy ()
         state, self.reward, self.done, self.info = self.env.step (action [0])
+        self.state = torch.from_numpy(state).float()
         self.rewards.append (self.reward)
         self.actions.append (action [0])
         self.actions_explained.append (self.env.int2index (action [0], self.env.agent_out_shape))

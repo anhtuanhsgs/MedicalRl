@@ -59,7 +59,6 @@ def test (args, shared_model, env_conf, datasets):
     while True:
         if flag:
             if gpu_id >= 0:
-                print ("test load")
                 with torch.cuda.device (gpu_id):                    
                     player.model.load_state_dict (shared_model.state_dict ())
             else:
