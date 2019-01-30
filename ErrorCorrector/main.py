@@ -171,7 +171,7 @@ parser.add_argument (
 parser.add_argument (
     '--reward-thres',
     type=float,
-    default=0.4
+    default=0.4,
     metavar='RT'
 )
 
