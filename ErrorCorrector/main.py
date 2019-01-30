@@ -192,7 +192,7 @@ def setup_env_conf (args):
         "env_gpu": args.env_gpu
     }
 
-    env_conf ["num_action"] = np.prod (env_conf ['agent_out_shape'])
+    env_conf ["num_action"] = np.prod (env_conf ['agent_out_shape'], dtype=np.int32)
     env_conf ["num_feature"] = env_conf ['observation_shape'][0]
     return env_conf
 
