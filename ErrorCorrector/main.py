@@ -70,7 +70,7 @@ parser.add_argument(
 parser.add_argument(
     '--max-episode-length',
     type=int,
-    default=4,
+    default=10,
     metavar='M',
     help='maximum length of an episode (default: 10000)')
 
@@ -128,14 +128,22 @@ parser.add_argument(
     type=int,
     default=50,
     metavar='SP',
-    help='Adam optimizer amsgrad parameter')
+    help='Save period')
 
 parser.add_argument(
     '--log-period',
     type=int,
     default=1,
     metavar='LP',
-    help='Adam optimizer amsgrad parameter')
+    help='Log period')
+
+parser.add_argument (
+    '--train-log-period',
+    type=int,
+    default=20,
+    metavar='TLP',
+    help
+)
 
 parser.add_argument (
     '--spliter',
@@ -173,17 +181,20 @@ def setup_env_conf (args):
         spliter = spliter_thres
 
     env_conf = {
-        "corrector_size": [128, 128], 
+        "corrector_size": [96, 96], 
         "spliter": spliter,
         "merger": merger,
         "cell_thres": int (255 * 0.5),
         "T": args.max_episode_length,
-        "agent_out_shape": [1, 2, 2],
-        "num_feature": 2,
-        "num_action": 1 * 2 * 2,
+        "agent_out_shape": [2, 8, 8],
+        
+        "num_action": 2 * 8 * 8,
         "observation_shape": [2, 256, 256],
         "env_gpu": args.env_gpu
     }
+
+    env_conf ["num_action"] = np.prod (env_conf ['agent_out_shape'])
+    env_conf ["num_feature"] = env_conf ['observation_shape'][0]
     return env_conf
 
 def get_data (path, args):
@@ -204,16 +215,16 @@ def setup_data (env_conf):
     raw , gt_lbl = get_data (path='Data/train/', args=None)
     prob = io.imread ('Data/train-membranes-idsia.tif')
     ##################################
-    prob = np.zeros_like (prob)
+    # prob = np.zeros_like (prob)
     ##################################
     lbl = []
     for img in prob:
         lbl += [label (img > env_conf ['cell_thres'])]
     lbl = np.array (lbl)
-    raw = raw [:1]
-    lbl = lbl [:1]
-    prob = prob [:1]
-    gt_lbl = gt_lbl [:1] 
+    raw = raw 
+    lbl = lbl
+    prob = prob 
+    gt_lbl = gt_lbl 
 
     return raw, lbl, prob, gt_lbl
 
