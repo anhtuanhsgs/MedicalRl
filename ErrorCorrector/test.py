@@ -83,7 +83,7 @@ def test (args, shared_model, env_conf, datasets, rank=-1):
             player.hx = Variable(player.hx.data)
 
         for step in range(args.num_steps):
-            player.action_train()
+            player.action_train(use_max=True)
             if rank == -1:
                 # if log_train_period <= train_step < log_train_period + 6:
                 # print ("action = ", player.action)
