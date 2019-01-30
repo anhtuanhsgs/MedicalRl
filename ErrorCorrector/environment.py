@@ -244,8 +244,8 @@ class EM_env (gym.Env):
         if (self.step_cnt >= self.T):
             # reward += self.old_score * 10
             reward = self.old_score
-            if (reward < 0.4):
-                reward = 0
+            # if (reward < 0.4):
+            #     reward = 0
             done = True
         else:
             done = False
