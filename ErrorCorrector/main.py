@@ -168,6 +168,13 @@ parser.add_argument (
     default=512,
     metavar='HF')
 
+parser.add_argument (
+    '--reward-thres',
+    type=float,
+    default=0.4
+    metavar='RT'
+)
+
 def setup_env_conf (args):
     if args.merger == 'FusionNet':
         merger = merger_FusionNet
@@ -188,6 +195,7 @@ def setup_env_conf (args):
         "agent_out_shape": [2, 8, 8],
         "observation_shape": [2, 512, 512],
         "env_gpu": args.env_gpu
+        "reward_thres": args.reward_thres
     }
 
     env_conf ["num_action"] = int (np.prod (env_conf ['agent_out_shape']))
