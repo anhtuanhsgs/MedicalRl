@@ -142,7 +142,6 @@ parser.add_argument (
     type=int,
     default=20,
     metavar='TLP',
-    help
 )
 
 parser.add_argument (
