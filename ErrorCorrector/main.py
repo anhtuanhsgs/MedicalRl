@@ -70,7 +70,7 @@ parser.add_argument(
 parser.add_argument(
     '--max-episode-length',
     type=int,
-    default=20,
+    default=8,
     metavar='M',
     help='maximum length of an episode (default: 10000)')
 
@@ -185,7 +185,7 @@ def setup_env_conf (args):
         "merger": merger,
         "cell_thres": int (255 * 0.5),
         "T": args.max_episode_length,
-        "agent_out_shape": [1, 4, 4],
+        "agent_out_shape": [1, 8, 8],
         "observation_shape": [2, 512, 512],
         "env_gpu": args.env_gpu
     }
