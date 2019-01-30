@@ -194,7 +194,7 @@ def setup_env_conf (args):
         "T": args.max_episode_length,
         "agent_out_shape": [2, 8, 8],
         "observation_shape": [2, 512, 512],
-        "env_gpu": args.env_gpu
+        "env_gpu": args.env_gpu,
         "reward_thres": args.reward_thres
     }
 
