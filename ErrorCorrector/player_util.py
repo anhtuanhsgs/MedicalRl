@@ -41,13 +41,14 @@ class Agent (object):
         if not use_max:
             action = prob.multinomial(1).data
             self.action = action.cpu().numpy() [0][0]
-            print (action.shape)
             log_prob = log_prob.gather(1, Variable(action.unsqueeze (0)))
             state, self.reward, self.done, self.info = self.env.step(
                 action.cpu().numpy())
         else:
             with torch.no_grad():
                 action = prob.max (1)[1].data
+                print (action.shape)
+                print (log_prob.shape)
                 self.action = action.cpu().numpy() [0]
                 log_prob = log_prob.gather(1, Variable(action))
                 state, self.reward, self.done, self.info = self.env.step(
