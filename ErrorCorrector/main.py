@@ -146,13 +146,13 @@ parser.add_argument (
 
 parser.add_argument (
     '--spliter',
-    default='FusionNet',
+    default='Thres',
     metavar='SPL',
     choices=['FusionNet', 'Thres'])
 
 parser.add_argument (
     '--merger',
-    default='FusionNet',
+    default='Thres',
     metavar='MER',
     choices=['FusionNet', 'Thres'])
 
@@ -212,7 +212,7 @@ def setup_data (env_conf):
     raw , gt_lbl = get_data (path='Data/train/', args=None)
     prob = io.imread ('Data/train-membranes-idsia.tif')
     ##################################
-    prob = np.zeros_like (prob)
+    # prob = np.zeros_like (prob)
     ##################################
     lbl = []
     for img in prob:
