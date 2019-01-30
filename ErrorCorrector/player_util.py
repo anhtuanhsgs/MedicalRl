@@ -87,16 +87,15 @@ class Agent (object):
             
         prob = F.softmax (logit, dim=1)
         action = prob.max (1)[1].data.cpu ().numpy ()
-
         state, self.reward, self.done, self.info = self.env.step (action [0])
         self.state = torch.from_numpy(state).float()
-
-        self.rewards.append (self.reward)
-        self.actions.append (action [0])
-        self.actions_explained.append (self.env.int2index (action [0], self.env.agent_out_shape))
         if self.gpu_id >= 0:
             with torch.cuda.device (self.gpu_id):
                 self.state = self.state.cuda ()
+        self.rewards.append (self.reward)
+        self.actions.append (action [0])
+        self.actions_explained.append (self.env.int2index (action [0], self.env.agent_out_shape))
+        
         self.eps_len += 1
         return self
 
