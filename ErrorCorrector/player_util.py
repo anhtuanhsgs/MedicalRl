@@ -28,7 +28,7 @@ class Agent (object):
         self.actions = []
         self.actions_explained = []
 
-    def action_train (self):
+    def action_train (self, use_max=False):
         value, logit, (self.hx, self.cx) = self.model((Variable(
             self.state.unsqueeze(0)), (self.hx, self.cx)))
         prob = F.softmax(logit, dim=1)
@@ -36,11 +36,20 @@ class Agent (object):
         log_prob = F.log_softmax(logit, dim=1)
         entropy = -(log_prob * prob).sum(1)
         self.entropies.append(entropy)
-        action = prob.multinomial(1).data
-        self.action = action.cpu().numpy() [0][0]
-        log_prob = log_prob.gather(1, Variable(action))
-        state, self.reward, self.done, self.info = self.env.step(
-            action.cpu().numpy())
+        
+        if not use_max:
+            action = prob.multinomial(1).data
+            self.action = action.cpu().numpy() [0][0]
+            log_prob = log_prob.gather(1, Variable(action))
+            state, self.reward, self.done, self.info = self.env.step(
+                action.cpu().numpy())
+        else:
+            action = prob.multinomial(1).data
+            self.action = action.cpu().numpy() [0][0]
+            log_prob = log_prob.gather(1, Variable(action))
+            state, self.reward, self.done, self.info = self.env.step(
+                action.cpu().numpy())
+            
         self.state = torch.from_numpy(state).float()
         if self.gpu_id >= 0:
             with torch.cuda.device(self.gpu_id):
