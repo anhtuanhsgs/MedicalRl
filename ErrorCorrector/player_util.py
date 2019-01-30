@@ -41,7 +41,7 @@ class Agent (object):
         if not use_max:
             action = prob.multinomial(1).data
             self.action = action.cpu().numpy() [0][0]
-            log_prob = log_prob.gather(1, Variable(action))
+            log_prob = log_prob.gather(1, Variable(action.unsqueeze (0)))
             state, self.reward, self.done, self.info = self.env.step(
                 action.cpu().numpy())
         else:
