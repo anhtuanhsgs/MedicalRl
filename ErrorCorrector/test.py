@@ -40,7 +40,7 @@ def test (args, shared_model, env_conf, datasets, rank=-1):
         with torch.cuda.device (gpu_id):
             player.state = player.state.cuda ()
             player.model = player.model.cuda ()
-    player.model.train ()
+    player.model.eval ()
 
     if rank == -1:
         eps_reward = 0
