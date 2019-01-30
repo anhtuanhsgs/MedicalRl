@@ -47,7 +47,7 @@ class Agent (object):
         else:
             with torch.no_grad():
                 action = prob.max (1)[1].data
-                print (action.shape)
+                print (action.unsqueeze (0).shape)
                 print (log_prob.shape)
                 self.action = action.cpu().numpy() [0]
                 log_prob = log_prob.gather(1, Variable(action))
