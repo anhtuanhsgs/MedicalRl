@@ -70,6 +70,7 @@ class Agent (object):
         with torch.no_grad():
             if self.done:
                 # print ("re load")
+                self.origin_score = self.env.old_score
                 if self.gpu_id >= 0:
                     with torch.cuda.device(self.gpu_id):
                         self.cx = Variable(

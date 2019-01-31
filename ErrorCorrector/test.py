@@ -221,10 +221,10 @@ def test (args, shared_model, env_conf, datasets):
             reward_total_sum += reward_sum
             reward_mean = reward_total_sum / num_tests
             log ['{}_log'.format (args.env)].info (
-                "Time {0}, episode reward {1}, num tests {4}, episode length {2}, reward mean {3:.4f}".
+                "Time {0}, origin score {5}, episode reward {1}, num tests {4}, episode length {2}, reward mean {3:.4f}".
                 format (
                     time.strftime ("%Hh %Mm %Ss", time.gmtime (time.time () - start_time)),
-                    reward_sum, player.eps_len, reward_mean, num_tests))
+                    reward_sum, player.eps_len, reward_mean, num_tests, player.origin_score))
 
             recent_episode_scores += [reward_sum]
             if len (recent_episode_scores) > 200:
