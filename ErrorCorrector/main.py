@@ -140,7 +140,7 @@ parser.add_argument(
 parser.add_argument (
     '--train-log-period',
     type=int,
-    default=8,
+    default=32,
     metavar='TLP',
 )
 
