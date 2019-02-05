@@ -165,7 +165,7 @@ parser.add_argument(
 parser.add_argument (
     '--hidden-feat',
     type=int,
-    default=1024,
+    default=512,
     metavar='HF')
 
 parser.add_argument (
@@ -192,7 +192,7 @@ def setup_env_conf (args):
         "merger": merger,
         "cell_thres": int (255 * 0.5),
         "T": args.max_episode_length,
-        "agent_out_shape": [1, 5, 5],
+        "agent_out_shape": [1, 4, 4],
         "observation_shape": [2, 256, 256],
         "env_gpu": args.env_gpu,
         "reward_thres": args.reward_thres

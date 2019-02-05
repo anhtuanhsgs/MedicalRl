@@ -52,17 +52,17 @@ class A3Clstm(torch.nn.Module):
         self.conv3 = nn.Conv2d(32, 64, 4, stride=1, padding=2)
         self.maxp3 = nn.MaxPool2d(2, 2)
         self.norm3 = nn.InstanceNorm2d (64)
-        self.conv4 = nn.Conv2d(64, 64, 3, stride=1, padding=1)
+        self.conv4 = nn.Conv2d(64, 128, 3, stride=1, padding=1)
         self.maxp4 = nn.MaxPool2d(2, 2)
-        self.norm4 = nn.InstanceNorm2d (64)
-        self.conv5 = nn.Conv2d(64, 128, 3, stride=1, padding=1)
+        self.norm4 = nn.InstanceNorm2d (128)
+        self.conv5 = nn.Conv2d(128, 128, 3, stride=1, padding=1)
         self.maxp5 = nn.MaxPool2d(2, 2)
         self.norm5 = nn.InstanceNorm2d (128)
-        self.conv6 = nn.Conv2d(128, 128, 3, stride=1, padding=1)
+        self.conv6 = nn.Conv2d(128, 256, 3, stride=1, padding=1)
         self.maxp6 = nn.MaxPool2d(2, 2)
         self.norm6 = nn.InstanceNorm2d (256)
 
-        num_values = input_shape[1] // (2 ** 6) * input_shape[2] // (2 ** 6) * 128
+        num_values = input_shape[1] // (2 ** 6) * input_shape[2] // (2 ** 6) * 256
         self.lstm = nn.LSTMCell(num_values, hidden_feat)
         self.critic_linear = nn.Linear(hidden_feat, 1)
         self.actor_linear = nn.Linear(hidden_feat, num_action)
