@@ -70,7 +70,7 @@ parser.add_argument(
 parser.add_argument(
     '--max-episode-length',
     type=int,
-    default=8,
+    default=6,
     metavar='M',
     help='maximum length of an episode (default: 10000)')
 
@@ -187,7 +187,7 @@ def setup_env_conf (args):
         spliter = spliter_thres
 
     env_conf = {
-        "corrector_size": [80, 80], 
+        "corrector_size": [96, 96], 
         "spliter": spliter,
         "merger": merger,
         "cell_thres": int (255 * 0.5),
