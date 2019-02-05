@@ -165,7 +165,7 @@ parser.add_argument(
 parser.add_argument (
     '--hidden-feat',
     type=int,
-    default=512,
+    default=1024,
     metavar='HF')
 
 parser.add_argument (
