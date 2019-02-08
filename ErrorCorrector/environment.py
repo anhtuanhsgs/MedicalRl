@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from malis import rand_index 
 from random import shuffle
 
-DEBUG = False
+DEBUG = True
 
 def rand_score (gt_lbl, pred_lbl):
     ret = adjusted_rand_score (pred_lbl.flatten (), gt_lbl.flatten ())
@@ -185,12 +185,12 @@ class EM_env (gym.Env):
         return vf (lbl)
 
     def observation (self):
-        # lbl = (self.lbl * self.max_lbl / 255.0).astype (np.int32)
-        # lbl = np.transpose (lbl2rgb (lbl), [2, 0, 1])
+        lbl = (self.lbl * self.max_lbl / 255.0).astype (np.int32)
+        lbl = np.transpose (lbl2rgb (lbl), [2, 0, 1])
         # lbl = np.repeat (np.zeros_like (self.lbl) [None], 3, 0)
         obs = np.concatenate ([
                 self.raw [None],
-                # lbl,
+                lbl,
                 self.prob [None],
                 # self.info_mask [None]
             ], 0)

@@ -70,7 +70,7 @@ parser.add_argument(
 parser.add_argument(
     '--max-episode-length',
     type=int,
-    default=8,
+    default=6,
     metavar='M',
     help='maximum length of an episode (default: 10000)')
 
@@ -187,13 +187,13 @@ def setup_env_conf (args):
         spliter = spliter_thres
 
     env_conf = {
-        "corrector_size": [80, 80], 
+        "corrector_size": [96, 96], 
         "spliter": spliter,
         "merger": merger,
         "cell_thres": int (255 * 0.5),
         "T": args.max_episode_length,
-        "agent_out_shape": [1, 5, 5],
-        "observation_shape": [2, 256, 256],
+        "agent_out_shape": [1, 4, 4],
+        "observation_shape": [5, 256, 256],
         "env_gpu": args.env_gpu,
         "reward_thres": args.reward_thres
     }
