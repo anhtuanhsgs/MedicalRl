@@ -193,7 +193,7 @@ def setup_env_conf (args):
         "cell_thres": int (255 * 0.5),
         "T": args.max_episode_length,
         "agent_out_shape": [1, 4, 4],
-        "observation_shape": [2, 256, 256],
+        "observation_shape": [5, 256, 256],
         "env_gpu": args.env_gpu,
         "reward_thres": args.reward_thres
     }
