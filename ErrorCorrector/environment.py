@@ -15,6 +15,13 @@ from gym.spaces import Box, Discrete, Tuple
 import matplotlib.pyplot as plt
 from malis import rand_index 
 from random import shuffle
+from PIL import Image, ImageFilter
+from utils import reward_scaler
+
+import sys
+sys.path.append('../')
+
+from misc.Voronoi import *
 
 DEBUG = True
 
@@ -190,7 +197,7 @@ class EM_env (gym.Env):
         # lbl = np.repeat (np.zeros_like (self.lbl) [None], 3, 0)
         obs = np.concatenate ([
                 self.raw [None],
-                lbl,
+                # lbl,
                 self.prob [None],
                 # self.info_mask [None]
             ], 0)
@@ -272,3 +279,195 @@ class EM_env (gym.Env):
             ], 1)
 
         return ret
+
+class Voronoi_env (gym.Env):
+    def __init__ (self, config, obs_format="CHW"):
+        self.config = config
+        self.obs_format = obs_format
+        self.type = "train"
+        self.init (config)
+
+    def init (self, config):
+        self.corrector_size = config ['corrector_size']
+        self.cell_thres = config ['cell_thres']
+        self.T = config ['T']
+        self.num_segs = config ["num_segs"]
+        self.max_lbl = self.num_segs + 1
+        self.spliter = config ['spliter']
+        self.merger = config ['merger']
+        self.agent_out_shape = config ['agent_out_shape']
+        self.observation_shape = config ['observation_shape']
+        self.action_space = Discrete(np.prod (self.agent_out_shape))
+        self.observation_space = Box (0.0, 255.0, shape=(config ['num_feature'], 
+                            self.observation_shape[1], self.observation_shape[2]), dtype=np.float32)
+        self.gpu_id = config ['env_gpu']
+        self.metric = malis_f1_score
+        self.rng = np.random.RandomState(time_seed ())
+        self.valid_range = [
+                [self.corrector_size [0] // 2, self.observation_shape[1] - self.corrector_size [0] // 2],
+                [self.corrector_size [1] // 2, self.observation_shape[2] - self.corrector_size [1] // 2]
+            ]
+        self.error_size = ()
+        for d in self.corrector_size:
+            self.error_size += (d // 2,)
+
+    def random_crop (self, size, images):
+        full_size = images [0].shape
+        y0 = self.rng.randint (0, full_size [0] - size [0])
+        x0 = self.rng.randint (0, full_size [1] - size [1])
+        # if DEBUG:
+        #     y0 = 0
+        #     x0 = 0
+        ret = []
+        for img in images:
+            ret += [img[y0:y0+size[0], x0:x0+size[0]]]
+        return ret
+
+    def crop_center (self, center, imgs, size):
+        y0 = center [0] - size [0] // 2
+        x0 = center [1] - size [1] // 2
+        # print ('crop center', center, y0, x0)
+        
+        ret = []
+        for img in imgs:
+            ret += [img [y0:y0+size[0], x0:x0+size[1]]]
+        return ret
+
+    def distort_prob (self,prob):
+
+        for i in range (self.T):
+            y0 = self.rng.randint (0, 256 - self.error_size [0])
+            x0 = self.rng.randint (0, 256 - self.error_size [1])
+            bbox = (y0, x0, y0+self.error_size[0], x0+self.error_size[1])
+            img_pil = Image.fromarray (prob)
+            cropped_img = img_pil.crop (bbox)
+            for i in range (4):
+                cropped_img = cropped_img.filter (ImageFilter.BoxBlur (radius=3))
+            img_pil.paste (cropped_img, bbox)
+            prob = np.asarray (img_pil)
+            prob.flags['WRITEABLE'] = True
+        prob = np.clip (prob, int (255 * 0.05), int (255 * 0.95))
+        return prob
+    
+    def int2index (self, x, size):
+        ret = ()
+        for l in size [::-1]:
+            ret += (x % l,)
+            x = x // l
+        return ret [::-1]
+
+    def index2validrange (self, idx, size):
+        idx_ret = []
+        for i in range (len (idx)):
+            idx_ret += [int (idx[i] / (size [i] - 1) * (self.valid_range [i][1] - self.valid_range [i][0]) + self.valid_range [i][0])]
+        return idx_ret
+
+    def reset (self):
+        self.step_cnt = 0
+        self.raw = create_voronoi_2d (self.rng, self.num_segs)
+        self.prob = get_boudary (self.raw [None], 0, 0) [0]
+        self.gt_lbl = label (self.prob > self.cell_thres).astype (np.int32)
+        self.prob = self.distort_prob (self.prob)
+        self.lbl = label (self.prob > self.cell_thres).astype (np.int32)
+        self.lbl = self.shuffle_lbl (self.lbl.astype (np.int32))
+        self.old_score = self.metric (self.gt_lbl, self.lbl.astype (np.uint32))
+        self.info_mask = np.zeros_like (self.raw)
+        self.lbl = self.transform_lbl (self.lbl.astype (np.float32))
+        return self.observation ()
+
+    def observation (self):
+        lbl = (self.lbl * self.max_lbl / 255.0).astype (np.int32)
+        lbl = np.transpose (lbl2rgb (lbl), [2, 0, 1])
+        # lbl = np.repeat (np.zeros_like (self.lbl) [None], 3, 0)
+        obs = np.concatenate ([
+                self.raw [None],
+                # lbl,
+                self.prob [None],
+                # self.info_mask [None]
+            ], 0)
+
+
+        if self.obs_format == "CHW":
+            ret = obs.astype (np.float32) / 255.0
+            return ret 
+        else:
+            ret = np.transpose (obs, [1, 2, 0]) / 255.0
+            return ret
+
+    def transform_lbl (self, lbl):
+        ESP = 1e-6
+        if (np.max (lbl) < ESP):
+            self.max_lbl = 0.0
+            return lbl
+        self.max_lbl = np.max (lbl)
+        return lbl / np.max (lbl) * 255.0
+
+    def shuffle_lbl (self, lbl):
+        per = list (range (1, 1000))
+        shuffle(per)
+        per = [0] + per
+        vf = np.vectorize (lambda x: per[x])
+        return vf (lbl)
+
+    def step (self, action):
+        assert (action < np.prod (self.agent_out_shape))
+        self.step_cnt += 1
+        # if (self.args ["Continuous"]):
+        #     error_index = 
+        action_index = self.int2index (action, self.agent_out_shape)
+        error_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
+        if action_index [0] == 0:
+            corrector = self.spliter
+        else:
+            corrector = self.merger
+        if self.type == 'train':
+            patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask, self.gt_lbl], self.corrector_size)
+        else:
+            patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask], self.corrector_size)
+
+        new_prob = corrector (patches [0], patches [2], gpu_id=self.gpu_id)
+        patches [2][::] = new_prob
+        new_label = label (self.prob > self.cell_thres, background=0).astype (np.int32)
+        if self.type == 'train':
+            new_score = self.metric (self.gt_lbl, new_label)
+            # reward = (new_score - self.old_score) * 10
+            reward = 0
+            self.old_score = new_score
+            # print ('current score:', self.old_score)
+        else:
+            reward = 0
+        patches [3][::] = int (1.0 * self.step_cnt / self.T * 255.0)
+        new_label = self.shuffle_lbl (new_label)
+        self.lbl [::,::] = self.transform_lbl (new_label.astype (np.float32))
+
+
+        if (self.step_cnt >= self.T):
+            # reward += self.old_score * 10
+            reward = reward_scaler (self.old_score)
+            done = True
+        else:
+            done = False
+        info = {}
+        return self.observation (), reward, done, info
+
+    def render (self):
+        raw = np.repeat (np.expand_dims (self.raw, -1), 3, -1).astype (np.uint8)
+        prob = np.repeat (np.expand_dims (self.prob, -1), 3, -1).astype (np.uint8)
+        info_mask = np.repeat (np.expand_dims (self.info_mask, -1), 3, -1).astype (np.uint8)
+        # print ("max :", self.max_lbl)
+        lbl = (self.lbl * self.max_lbl / 255.0).astype (np.int32)
+        # plt.imshow (lbl)
+        # plt.show ()
+        # print ('current rand_index:', self.metric (self.gt_lbl, lbl))
+        lbl = lbl2rgb (lbl)
+        gt_lbl = lbl2rgb (self.gt_lbl)
+
+        ret = np.concatenate ([raw,
+                prob,
+                lbl,
+                gt_lbl,
+                info_mask
+            ], 1)
+
+        return ret
+

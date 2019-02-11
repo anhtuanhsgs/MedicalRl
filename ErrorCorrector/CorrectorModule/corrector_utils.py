@@ -56,9 +56,9 @@ def merger_FusionNet (raw, prob, gpu_id):
     return ret * 255.0
 
 def spliter_thres (raw, prob, gpu_id):
-    ret = (prob > (255 * 0.85)).astype (np.float32) * 255.0
+    ret = (prob > (255 * 0.7)).astype (np.float32) * 255.0
     return ret
 
 def merger_thres (raw, prob, gpu_id):
-    ret = (prob > (255 * 0.55)).astype (np.float32) * 255.0
+    ret = (prob > (255 * 0.3)).astype (np.float32) * 255.0
     return ret

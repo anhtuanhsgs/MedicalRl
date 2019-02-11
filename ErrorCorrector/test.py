@@ -155,11 +155,10 @@ import numpy as np
 #                 for tag, value in log_info.items ():
 #                     logger.scalar_summary (tag, value, train_step)
 
-def test (args, shared_model, env_conf, datasets):
+def test (args, shared_model, env_conf, datasets=None):
     ptitle ('Test agent')
     gpu_id = args.gpu_ids [-1]
     log = {}
-
     logger = Logger (args.log_dir)
 
     setup_logger ('{}_log'.format (args.env), r'{0}{1}_log'.format (args.log_dir, args.env))
@@ -173,9 +172,12 @@ def test (args, shared_model, env_conf, datasets):
 
     if gpu_id >= 0:
         torch.cuda.manual_seed (args.seed)
-        
-    raw, lbl, prob, gt_lbl = datasets
-    env = EM_env (raw, lbl, prob, env_conf, 'train', gt_lbl)
+    if args.env == "EM_env":
+        raw, lbl, prob, gt_lbl = datasets
+        env = EM_env (raw, lbl, prob, env_conf, 'train', gt_lbl)
+    else:
+        env = Voronoi_env (env_conf)
+
     reward_sum = 0
     start_time = time.time ()
     num_tests = 0
@@ -221,10 +223,10 @@ def test (args, shared_model, env_conf, datasets):
             reward_total_sum += reward_sum
             reward_mean = reward_total_sum / num_tests
             log ['{}_log'.format (args.env)].info (
-                "Time {0}, origin score {5}, episode reward {1}, num tests {4}, episode length {2}, reward mean {3:.4f}".
+                "Time {0}, t0 score {5}, tn score {6}, episode reward {1}, num tests {4}, episode length {2}, reward mean {3:.4f}".
                 format (
                     time.strftime ("%Hh %Mm %Ss", time.gmtime (time.time () - start_time)),
-                    reward_sum, player.eps_len, reward_mean, num_tests, player.origin_score))
+                    reward_sum, player.eps_len, reward_mean, num_tests, player.origin_score, player.env.old_score))
 
             recent_episode_scores += [reward_sum]
             if len (recent_episode_scores) > 200:
@@ -269,6 +271,7 @@ def test (args, shared_model, env_conf, datasets):
             
             player.clear_actions ()
             state = player.env.reset ()
+            renderlist.append (player.env.render ())
             time.sleep (15)
             player.state = torch.from_numpy (state).float ()
             if gpu_id >= 0:

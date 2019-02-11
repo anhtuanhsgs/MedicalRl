@@ -11,7 +11,7 @@ from Utils.Logger import Logger
 
 import numpy as np
 
-def train (rank, args, shared_model, optimizer, env_conf, datasets):
+def train (rank, args, shared_model, optimizer, env_conf, datasets=None):
     ptitle('Training Agent: {}'.format(rank))
     print ('Start training agent: ', rank)
     
@@ -23,8 +23,12 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
     torch.manual_seed(args.seed + rank)
     if gpu_id >= 0:
         torch.cuda.manual_seed(args.seed + rank)
-    raw, lbl, prob, gt_lbl = datasets
-    env = EM_env (raw, lbl, prob, env_conf, 'train', gt_lbl)
+    if args.env == "EM_env":
+        raw, lbl, prob, gt_lbl = datasets
+        env = EM_env (raw, lbl, prob, env_conf, 'train', gt_lbl)
+    else:
+        env = Voronoi_env (env_conf)
+
     if optimizer is None:
         if args.optimizer == 'RMSprop':
             optimizer = optim.RMSprop (shared_model.parameters (), lr=args.lr)
@@ -38,6 +42,8 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
 
     player.state = player.env.reset ()
     player.state = torch.from_numpy (player.state).float ()
+    old_score = player.env.old_score
+    final_score = 0
 
     if gpu_id >= 0:
         with torch.cuda.device (gpu_id):
@@ -61,7 +67,9 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
             player.eps_len = 0
             if rank == 0:
                 if 0 <= (train_step % args.train_log_period) < args.max_episode_length:
-                    print ("train: step", train_step, "\teps_reward", eps_reward)
+                    print ("train: step", train_step, "\teps_reward", eps_reward, 
+                        "\timprovement", final_score - old_score)
+                old_score = player.env.old_score
                 pinned_eps_reward = eps_reward
                 eps_reward = 0
                 mean_log_prob = 0
@@ -87,6 +95,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets):
                 break
 
         if player.done:
+            final_score = player.env.old_score
             state = player.env.reset ()
             player.state = torch.from_numpy (state).float ()
             if gpu_id >= 0:

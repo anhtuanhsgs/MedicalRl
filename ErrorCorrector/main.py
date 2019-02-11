@@ -176,13 +176,19 @@ parser.add_argument (
 )
 
 def setup_env_conf (args):
-    if args.merger == 'FusionNet':
-        merger = merger_FusionNet
+    if args.env == "EM_env":
+        if args.merger == 'FusionNet':
+            merger = merger_FusionNet
+        else:
+            merger = merger_thres
     else:
         merger = merger_thres
 
-    if args.spliter == 'FusionNet':
-        spliter = spliter_FusionNet
+    if args.env == "EM_env":
+        if args.spliter == 'FusionNet':
+            spliter = spliter_FusionNet
+        else:
+            spliter = spliter_thres
     else:
         spliter = spliter_thres
 
@@ -193,11 +199,12 @@ def setup_env_conf (args):
         "cell_thres": int (255 * 0.5),
         "T": args.max_episode_length,
         "agent_out_shape": [1, 4, 4],
-        "observation_shape": [5, 256, 256],
+        "observation_shape": [2, 256, 256],
         "env_gpu": args.env_gpu,
-        "reward_thres": args.reward_thres
+        "reward_thres": args.reward_thres,
+        "num_segs": 40
     }
-
+    args.log_dir += args.env + "/"
     env_conf ["num_action"] = int (np.prod (env_conf ['agent_out_shape']))
     env_conf ["num_feature"] = env_conf ['observation_shape'][0]
     return env_conf
@@ -243,7 +250,9 @@ if __name__ == '__main__':
         torch.cuda.manual_seed(args.seed)
         mp.set_start_method('spawn')
     env_conf = setup_env_conf (args)
-    raw, lbl, prob, gt_lbl = setup_data (env_conf)
+
+    if args.env == "EM_env":
+        raw, lbl, prob, gt_lbl = setup_data (env_conf)
 
     # env =EM_env (raw, lbl, prob, env_conf, 'train', gt_lbl)
     shared_model = A3Clstm (env_conf ["observation_shape"], 
@@ -267,15 +276,21 @@ if __name__ == '__main__':
         optimizer = None
 
     processes = []
-
-    p = mp.Process(target=test, args=(args, shared_model, env_conf, [raw, lbl, prob, gt_lbl]))
+    if args.env == "EM_env":
+        p = mp.Process(target=test, args=(args, shared_model, env_conf, [raw, lbl, prob, gt_lbl]))
+    else:
+        p = mp.Process(target=test, args=(args, shared_model, env_conf))
     p.start()
     processes.append(p)
     time.sleep(1)
 
     for rank in range(0, args.workers):
-        p = mp.Process(
-            target=train, args=(rank, args, shared_model, optimizer, env_conf, [raw, lbl, prob, gt_lbl]))
+        if args.env == "EM_env":
+            p = mp.Process(
+                target=train, args=(rank, args, shared_model, optimizer, env_conf, [raw, lbl, prob, gt_lbl]))
+        else:
+             p = mp.Process(
+                target=train, args=(rank, args, shared_model, optimizer, env_conf))
         p.start()
         processes.append(p)
         time.sleep(1)

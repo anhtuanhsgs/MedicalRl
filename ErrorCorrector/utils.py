@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import json
 import logging
+import math as m
 
 
 def setup_logger(logger_name, log_file, level=logging.INFO):
@@ -57,3 +58,13 @@ def weights_init(m):
         w_bound = np.sqrt(6. / (fan_in + fan_out))
         m.weight.data.uniform_(-w_bound, w_bound)
         m.bias.data.fill_(0)
+
+def reward_scaler (r):
+    alpha = 5
+    beta = 2
+    r = m.pow (alpha, (r * beta)) / m.pow (alpha, 1 * beta)
+    return r
+
+if __name__ == "__main__":
+    r = float (input ())
+    print (reward_scaler (r))
