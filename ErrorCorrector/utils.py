@@ -59,9 +59,7 @@ def weights_init(m):
         m.weight.data.uniform_(-w_bound, w_bound)
         m.bias.data.fill_(0)
 
-def reward_scaler (r):
-    alpha = 5
-    beta = 2
+def reward_scaler (r, alpha, beta):
     r = m.pow (alpha, (r * beta)) / m.pow (alpha, 1 * beta)
     return r
 

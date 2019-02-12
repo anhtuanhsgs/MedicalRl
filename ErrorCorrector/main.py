@@ -175,6 +175,33 @@ parser.add_argument (
     metavar='RT'
 )
 
+
+parser.add_argument(
+    '--merge-err',
+    default=False,
+    metavar='SO',
+    help='use an optimizer without shared statistics.')
+
+parser.add_argument(
+    '--split-err',
+    default=True,
+    metavar='SO',
+    help='use an optimizer without shared statistics.')
+
+parser.add_argument (
+    '--alpha',
+    type=float,
+    default=5,
+    metavar='RT'
+)
+
+parser.add_argument (
+    '--beta',
+    type=float,
+    default=2,
+    metavar='RT'
+)
+
 def setup_env_conf (args):
     if args.env == "EM_env":
         if args.merger == 'FusionNet':
@@ -190,7 +217,11 @@ def setup_env_conf (args):
         else:
             spliter = spliter_thres
     else:
-        spliter = spliter_thres
+        #############Single case error###############
+        if args.merge_err:
+            spliter = spliter_thres
+        else:
+            spliter = merger_thres
 
     env_conf = {
         "corrector_size": [96, 96], 
@@ -202,9 +233,20 @@ def setup_env_conf (args):
         "observation_shape": [2, 256, 256],
         "env_gpu": args.env_gpu,
         "reward_thres": args.reward_thres,
-        "num_segs": 40
+        "num_segs": 40,
+        "split_err": args.split_err,
+        "merge_err": args.merge_err,
+        "alpha": args.alpha,
+        "beta": args.beta
     }
+    if (args.env != "EM_env"):
+        if args.split_err:
+            args.env += "_split"
+        if args.merge_err:
+            args.env += "_merge"
+
     args.log_dir += args.env + "/"
+
     env_conf ["num_action"] = int (np.prod (env_conf ['agent_out_shape']))
     env_conf ["num_feature"] = env_conf ['observation_shape'][0]
     return env_conf

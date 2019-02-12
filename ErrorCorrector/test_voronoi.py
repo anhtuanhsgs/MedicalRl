@@ -31,11 +31,16 @@ def setup_env_conf ():
         "cell_thres": int (255 * 0.5),
         "T": 6,
         "agent_out_shape": [1, 4, 4],
-        "observation_shape": [5, 256, 256],
+        "observation_shape": [2, 256, 256],
         "env_gpu": 0,
         "reward_thres": 0.5,
         "num_segs": 40,
+        "merge_err": False,
+        "split_err": True
     }
+    if env_conf ["split_err"]:
+        env_conf ["spliter"] = merger_thres
+        print ("use merger_thres")
 
     env_conf ["num_action"] = int (np.prod (env_conf ['agent_out_shape']))
     env_conf ["num_feature"] = env_conf ['observation_shape'][0]
@@ -66,13 +71,7 @@ else:
     hx = Variable(torch.zeros(1, 512))
 
 done = False
-obs = env.reset ()
-
-print ("old_score", env.old_score)
-plt.imshow (env.render ())
-plt.show ()
 cnt = 0
-print (obs.shape)
 
 for i in range (env.agent_out_shape [1]):
     for j in range (env.agent_out_shape [2]):
@@ -82,6 +81,9 @@ for i in range (env.agent_out_shape [1]):
 
 done = False
 obs = env.reset ()
+print ("old_score", env.old_score)
+plt.imshow (env.render ())
+plt.show ()
 
 model = setup_rl_model (env, env_config)
 sum_score = 0

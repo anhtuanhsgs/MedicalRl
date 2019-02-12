@@ -17,6 +17,7 @@ from malis import rand_index
 from random import shuffle
 from PIL import Image, ImageFilter
 from utils import reward_scaler
+from skimage.draw import line_aa
 
 import sys
 sys.path.append('../')
@@ -333,22 +334,45 @@ class Voronoi_env (gym.Env):
             ret += [img [y0:y0+size[0], x0:x0+size[1]]]
         return ret
 
-    def distort_prob (self,prob):
-
+    def merge_prob (self,prob):
         for i in range (self.T):
             y0 = self.rng.randint (0, 256 - self.error_size [0])
             x0 = self.rng.randint (0, 256 - self.error_size [1])
             bbox = (y0, x0, y0+self.error_size[0], x0+self.error_size[1])
             img_pil = Image.fromarray (prob)
             cropped_img = img_pil.crop (bbox)
-            for i in range (4):
-                cropped_img = cropped_img.filter (ImageFilter.BoxBlur (radius=3))
+            cropped_img = cropped_img.filter (ImageFilter.BoxBlur (radius=5))
             img_pil.paste (cropped_img, bbox)
             prob = np.asarray (img_pil)
             prob.flags['WRITEABLE'] = True
         prob = np.clip (prob, int (255 * 0.05), int (255 * 0.95))
         return prob
     
+    def split_prob (self, prob):
+        for i in range (self.T * 2):
+            y0 = self.rng.randint (0, 256 - self.error_size [0])
+            x0 = self.rng.randint (0, 256 - self.error_size [1])
+            bbox = (y0, x0, y0+self.error_size[0] * 3 // 2, x0+self.error_size[1] * 2)
+            img_pil = Image.fromarray (prob)
+            cropped_img = img_pil.crop (bbox)
+
+            cropped_img_np = np.array (cropped_img)
+            full_row = self.rng.randint (2)
+            r1 = self.error_size [0] - 1
+            c1 = self.rng.randint (self.error_size [1])
+            if full_row == 0:
+                r1, c1 = c1, r1
+            rr, cc, val = line_aa(0, 0, r1, c1)
+            val = (val > 0).astype (np.uint32)
+            cropped_img_np [rr, cc] = np.minimum (cropped_img_np [rr, cc], val * 100)
+            cropped_img = Image.fromarray (cropped_img_np)
+
+            img_pil.paste (cropped_img, bbox)
+            prob = np.asarray (img_pil)
+            prob.flags['WRITEABLE'] = True
+        prob = np.clip (prob, int (255 * 0.05), int (255 * 0.95))
+        return prob
+
     def int2index (self, x, size):
         ret = ()
         for l in size [::-1]:
@@ -367,7 +391,10 @@ class Voronoi_env (gym.Env):
         self.raw = create_voronoi_2d (self.rng, self.num_segs)
         self.prob = get_boudary (self.raw [None], 0, 0) [0]
         self.gt_lbl = label (self.prob > self.cell_thres).astype (np.int32)
-        self.prob = self.distort_prob (self.prob)
+        if self.config ["split_err"]:
+            self.prob = self.split_prob (self.prob)
+        if self.config ["merge_err"]:
+            self.prob = self.merge_prob (self.prob)
         self.lbl = label (self.prob > self.cell_thres).astype (np.int32)
         self.lbl = self.shuffle_lbl (self.lbl.astype (np.int32))
         self.old_score = self.metric (self.gt_lbl, self.lbl.astype (np.uint32))
@@ -385,7 +412,6 @@ class Voronoi_env (gym.Env):
                 self.prob [None],
                 # self.info_mask [None]
             ], 0)
-
 
         if self.obs_format == "CHW":
             ret = obs.astype (np.float32) / 255.0
@@ -443,7 +469,7 @@ class Voronoi_env (gym.Env):
 
         if (self.step_cnt >= self.T):
             # reward += self.old_score * 10
-            reward = reward_scaler (self.old_score)
+            reward = reward_scaler (self.old_score, self.config["alpha"], self.config["beta"])
             done = True
         else:
             done = False
