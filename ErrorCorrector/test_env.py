@@ -21,15 +21,17 @@ FEATURES = [16, 32, 64, 128]
 gpu_id = 0
 env_config = {
     "corrector_size": [160, 160], 
-    "spliter": spliter_FusionNet,
-    "merger": merger_FusionNet,
+    "spliter": spliter_FusionNet_fn,
+    "merger": spliter_FusionNet_fn,
     "cell_thres": int (255 * 0.5),
     "T": 4,
     "agent_out_shape": [1, 2, 2],
-    "num_feature": 2,
+    "num_feature": 3,
     "num_action": 1 * 2 * 2,
-    "observation_shape": [2, 256, 256],
-    "env_gpu": gpu_id
+    "observation_shape": [3, 256, 256],
+    "env_gpu": gpu_id,
+    "gauss-blending": True,
+    "use_stop": True
 }
 
 def get_data (path, args):
@@ -133,7 +135,7 @@ while not done:
     print ("reward:", reward)
     print ("old_score:", env.old_score)
     print ("done: ", done)
-    plt.imshow (env.render ())
+    plt.imshow (tmp)
     plt.show ()
     sum_score += reward
     # plt.imshow (env.render ())

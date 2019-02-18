@@ -5,7 +5,7 @@ import torch.optim as optim
 from environment import *
 from utils import ensure_shared_grads
 from model import *
-from player_util import Agent
+from player_util import Agent, Agent_continuous
 from torch.autograd import Variable
 from Utils.Logger import Logger
 
@@ -20,10 +20,11 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets=None):
         train_step = 0
 
     gpu_id = args.gpu_ids[rank % len(args.gpu_ids)]
+    env_conf ["env_gpu"] = gpu_id
     torch.manual_seed(args.seed + rank)
     if gpu_id >= 0:
         torch.cuda.manual_seed(args.seed + rank)
-    if args.env == "EM_env":
+    if "EM_env" in args.env:
         raw, lbl, prob, gt_lbl = datasets
         env = EM_env (raw, lbl, prob, env_conf, 'train', gt_lbl)
     else:
@@ -36,9 +37,15 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets=None):
             optimizer = optim.Adam (shared_model.parameters (), lr=args.lr, amsgrad=args.amsgrad)
 
         # env.seed (args.seed + rank)
-    player = Agent (None, env, args, None)
+    if not args.continuous:
+        player = Agent (None, env, args, None)
+    else:
+        player = Agent_continuous (None, env, args, None)
     player.gpu_id = gpu_id
-    player.model = A3Clstm (env.observation_space.shape, env_conf["num_action"], args.hidden_feat)
+    if not args.continuous:
+        player.model = A3Clstm (env.observation_space.shape, env_conf["num_action"], args.hidden_feat)
+    else:
+        player.model = A3Clstm_continuous (env.observation_space.shape, env_conf["num_action"], args.hidden_feat)
 
     player.state = player.env.reset ()
     player.state = torch.from_numpy (player.state).float ()
@@ -55,6 +62,8 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets=None):
         eps_reward = 0
         pinned_eps_reward = 0
         mean_log_prob = 0
+
+    # print ("rank: ", rank)
 
     while True:
         if gpu_id >= 0:
@@ -85,16 +94,19 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets=None):
             player.hx = Variable(player.hx.data)
 
         for step in range(args.num_steps):
-            player.action_train()
+            player.action_train ()
             if rank == 0:
                 # if 0 <= (train_step % args.train_log_period) < args.max_episode_length:
                 #     print ("train: step", train_step, "\taction = ", player.action)
                 eps_reward += player.reward
+                # print (eps_reward)
                 mean_log_prob += player.log_probs [-1] / env_conf ["T"]
             if player.done:
                 break
 
         if player.done:
+            # if rank == 0:
+            #     print ("----------------------------------------------")
             final_score = player.env.old_score
             state = player.env.reset ()
             player.state = torch.from_numpy (state).float ()
@@ -104,7 +116,11 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets=None):
 
         R = torch.zeros (1, 1)
         if not player.done:
-            value, _, _ = player.model((Variable(player.state.unsqueeze(0)),
+            if not args.continuous:
+                value, _, _ = player.model((Variable(player.state.unsqueeze(0)),
+                                        (player.hx, player.cx)))
+            else:
+                value, _, _, _ = player.model((Variable(player.state.unsqueeze(0)),
                                         (player.hx, player.cx)))
             R = value.data
 
@@ -130,13 +146,19 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets=None):
                         player.values[i].data
 
             gae = gae * args.gamma * args.tau + delta_t
-
-            policy_loss = policy_loss - \
-                player.log_probs[i] * \
-                Variable(gae) - 0.01 * player.entropies[i]
+            # print (player.rewards [i])
+            if not args.continuous:
+                policy_loss = policy_loss - \
+                    player.log_probs[i] * \
+                    Variable(gae) - 0.01 * player.entropies[i]
+            else:
+                policy_loss = policy_loss - \
+                    player.log_probs[i].sum () * Variable(gae) - \
+                    0.01 * player.entropies[i].sum ()
 
         player.model.zero_grad ()
         sum_loss = (policy_loss + value_loss)
+
         sum_loss.backward ()
         ensure_shared_grads (player.model, shared_model, gpu=gpu_id >= 0)
         optimizer.step ()

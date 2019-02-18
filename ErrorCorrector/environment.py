@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from malis import rand_index 
 from random import shuffle
 from PIL import Image, ImageFilter
-from utils import reward_scaler
+from utils import reward_scaler, build_blend_weight
 from skimage.draw import line_aa
 
 import sys
@@ -55,8 +55,9 @@ class EM_env (gym.Env):
 
     def init (self, config):
         self.corrector_size = config ['corrector_size']
-        self.spliter = config ['spliter']
-        self.merger = config ['merger']
+        self.gpu_id = config ['env_gpu']
+        self.spliter = config ['spliter'] (self.gpu_id) 
+        self.merger = config ['merger'] (self.gpu_id)
         self.cell_thres = config ['cell_thres']
         self.T = config ['T']
         self.agent_out_shape = config ['agent_out_shape']
@@ -67,8 +68,11 @@ class EM_env (gym.Env):
         self.action_space = Discrete(np.prod (self.agent_out_shape))
         self.observation_space = Box (0.0, 255.0, shape=(config ['num_feature'], 
                             self.observation_shape[1], self.observation_shape[2]), dtype=np.float32)
-        self.gpu_id = config ['env_gpu']
         
+        self.blend_w = None
+        if config ["gauss-blending"]:
+            self.blend_w = build_blend_weight (self.corrector_size)
+
         self.metric = malis_f1_score 
         self.valid_range = [
                 [self.corrector_size [0] // 2, self.observation_shape[1] - self.corrector_size [0] // 2],
@@ -117,20 +121,6 @@ class EM_env (gym.Env):
         for img in imgs:
             ret += [img [y0:y0+size[0], x0:x0+size[1]]]
         return ret
-
-    # def random_crop (self, size, images, mask=None):
-    #     stack = []
-    #     for img in images:
-    #         stack += [np.expand_dims (img, -1)]
-    #     stack = np.concatenate (stack, -1)
-    #     cropper = A.RandomCrop (height=size [0], width=size[1], p=1)
-    #     cropped = cropper (image=stack, mask=mask)
-    #     cropped_stack, mask = cropped ['image'], cropped ['mask']
-    #     ret = []
-    #     for i in range (len (images)):
-    #         ret += [cropped_stack [..., i]]
-    #     ret += [mask]
-    #     return ret
 
     def random_crop (self, size, images):
         full_size = images [0].shape
@@ -193,12 +183,16 @@ class EM_env (gym.Env):
         return vf (lbl)
 
     def observation (self):
-        lbl = (self.lbl * self.max_lbl / 255.0).astype (np.int32)
-        lbl = np.transpose (lbl2rgb (lbl), [2, 0, 1])
+        #RGB LBL
+        # lbl = (self.lbl * self.max_lbl / 255.0).astype (np.int32)
+        # lbl = np.transpose (lbl2rgb (lbl), [2, 0, 1])
+        #Zero LBL
         # lbl = np.repeat (np.zeros_like (self.lbl) [None], 3, 0)
+        #1 CHANNEL LBL
+        lbl = self.lbl [None] 
         obs = np.concatenate ([
                 self.raw [None],
-                # lbl,
+                lbl,
                 self.prob [None],
                 # self.info_mask [None]
             ], 0)
@@ -214,46 +208,47 @@ class EM_env (gym.Env):
             return ret
 
     def step (self, action):
-        assert (action < np.prod (self.agent_out_shape))
+        assert (action < np.prod (self.agent_out_shape) + int (self.config ["use_stop"]))
         self.step_cnt += 1
-        # if (self.args ["Continuous"]):
-        #     error_index = 
-        action_index = self.int2index (action, self.agent_out_shape)
-        error_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
-        # print ('valid range: ', self.valid_range, 'error index: ', action_index [1:])
-        # print ('action index: ', action_index)
-        # print ('error index', error_index)
-        # print ('corrector size', self.corrector_size)
-        if action_index [0] == 0:
-            corrector = self.spliter
+        done = False
+        if (self.config ["use_stop"] and action == self.config ["num_action"] - 1):
+            done = True
         else:
-            corrector = self.merger
-        if self.type == 'train':
-            patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask, self.gt_lbl], self.corrector_size)
-        else:
-            patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask], self.corrector_size)
+            action_index = self.int2index (action, self.agent_out_shape)
+            error_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
+            if action_index [0] == 0:
+                corrector = self.spliter
+            else:
+                corrector = self.merger
+            if self.type == 'train':
+                patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask, self.gt_lbl], self.corrector_size)
+            else:
+                patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask], self.corrector_size)
 
-        new_prob = corrector (patches [0], patches [2], gpu_id=self.gpu_id)
-        patches [2][::] = new_prob
-        new_label = label (self.prob > self.cell_thres, background=0).astype (np.int32)
-        if self.type == 'train':
-            new_score = self.metric (self.gt_lbl, new_label)
-            # reward = (new_score - self.old_score) * 10
-            reward = 0
-            self.old_score = new_score
-            # print ('current score:', self.old_score)
-        else:
-            reward = 0
-        patches [3][::] = int (1.0 * self.step_cnt / self.T * 255.0)
-        new_label = self.shuffle_lbl (new_label)
-        self.lbl [::,::] = self.transform_lbl (new_label.astype (np.float32))
+            new_prob = corrector (patches [0], patches [2], gpu_id=self.gpu_id)
+            if self.blend_w is None:
+                patches [2][::] = new_prob
+            else:
+                sum_w = self.blend_w * 9 + 1
+                patches [2][::] = (new_prob * 9 * self.blend_w + patches [2][::]) / sum_w
+
+            new_label = label (self.prob > self.cell_thres, background=0).astype (np.int32)
+            if self.type == 'train':
+                new_score = self.metric (self.gt_lbl, new_label)
+                reward = 0
+                self.old_score = new_score
+            else:
+                reward = 0
+            patches [3][::] = int (1.0 * self.step_cnt / self.T * 255.0)
+            new_label = self.shuffle_lbl (new_label)
+            self.lbl [::,::] = self.transform_lbl (new_label.astype (np.float32))
 
 
-        if (self.step_cnt >= self.T):
-            # reward += self.old_score * 10
+        if (self.step_cnt >= self.T or done):
             reward = self.old_score
             if (reward < self.config ["reward_thres"]):
                 reward = 0
+            reward = reward_scaler (self.old_score, self.config["alpha"], self.config["beta"])
             done = True
         else:
             done = False
@@ -264,11 +259,7 @@ class EM_env (gym.Env):
         raw = np.repeat (np.expand_dims (self.raw, -1), 3, -1).astype (np.uint8)
         prob = np.repeat (np.expand_dims (self.prob, -1), 3, -1).astype (np.uint8)
         info_mask = np.repeat (np.expand_dims (self.info_mask, -1), 3, -1).astype (np.uint8)
-        # print ("max :", self.max_lbl)
         lbl = (self.lbl * self.max_lbl / 255.0).astype (np.int32)
-        # plt.imshow (lbl)
-        # plt.show ()
-        # print ('current rand_index:', self.metric (self.gt_lbl, lbl))
         lbl = lbl2rgb (lbl)
         gt_lbl = lbl2rgb (self.gt_lbl)
 
@@ -276,7 +267,7 @@ class EM_env (gym.Env):
                 prob,
                 lbl,
                 gt_lbl,
-                # info_mask
+                info_mask
             ], 1)
 
         return ret
@@ -294,14 +285,14 @@ class Voronoi_env (gym.Env):
         self.T = config ['T']
         self.num_segs = config ["num_segs"]
         self.max_lbl = self.num_segs + 1
-        self.spliter = config ['spliter']
-        self.merger = config ['merger']
+        self.gpu_id = config ['env_gpu']
+        self.spliter = config ['spliter'] (self.gpu_id)
+        self.merger = config ['merger'] (self.gpu_id)
         self.agent_out_shape = config ['agent_out_shape']
         self.observation_shape = config ['observation_shape']
         self.action_space = Discrete(np.prod (self.agent_out_shape))
         self.observation_space = Box (0.0, 255.0, shape=(config ['num_feature'], 
                             self.observation_shape[1], self.observation_shape[2]), dtype=np.float32)
-        self.gpu_id = config ['env_gpu']
         self.metric = malis_f1_score
         self.rng = np.random.RandomState(time_seed ())
         self.valid_range = [
@@ -335,7 +326,8 @@ class Voronoi_env (gym.Env):
         return ret
 
     def merge_prob (self,prob):
-        for i in range (self.T):
+        # for i in range (self.T):
+        for i in range (self.config["num_err"]):
             y0 = self.rng.randint (0, 256 - self.error_size [0])
             x0 = self.rng.randint (0, 256 - self.error_size [1])
             bbox = (y0, x0, y0+self.error_size[0], x0+self.error_size[1])
@@ -373,6 +365,13 @@ class Voronoi_env (gym.Env):
         prob = np.clip (prob, int (255 * 0.05), int (255 * 0.95))
         return prob
 
+    def approx2index (self, y_apx, x_apx, size):
+        y_apx = (y_apx + 1) / 2
+        x_apx = (x_apx + 1) / 2
+        y = int (y_apx * (self.valid_range [0][1] - self.valid_range [0][0]) + self.valid_range [0][0])
+        x = int (x_apx * (self.valid_range [1][1] - self.valid_range [1][0]) + self.valid_range [1][0])
+        return y, x
+
     def int2index (self, x, size):
         ret = ()
         for l in size [::-1]:
@@ -403,12 +402,16 @@ class Voronoi_env (gym.Env):
         return self.observation ()
 
     def observation (self):
-        lbl = (self.lbl * self.max_lbl / 255.0).astype (np.int32)
-        lbl = np.transpose (lbl2rgb (lbl), [2, 0, 1])
+        #RGB LBL
+        # lbl = (self.lbl * self.max_lbl / 255.0).astype (np.int32)
+        # lbl = np.transpose (lbl2rgb (lbl), [2, 0, 1])
+        #Zero LBL
         # lbl = np.repeat (np.zeros_like (self.lbl) [None], 3, 0)
+        #1 CHANNEL LBL
+        lbl = self.lbl [None]
         obs = np.concatenate ([
                 self.raw [None],
-                # lbl,
+                lbl,
                 self.prob [None],
                 # self.info_mask [None]
             ], 0)
@@ -436,39 +439,44 @@ class Voronoi_env (gym.Env):
         return vf (lbl)
 
     def step (self, action):
-        assert (action < np.prod (self.agent_out_shape))
+        if not self.config ["continuous"]:
+            assert (action < np.prod (self.agent_out_shape) + int (self.config ["use_stop"]))
         self.step_cnt += 1
-        # if (self.args ["Continuous"]):
-        #     error_index = 
-        action_index = self.int2index (action, self.agent_out_shape)
-        error_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
-        if action_index [0] == 0:
-            corrector = self.spliter
+        done = False
+        if self.config ["use_stop"] and action == self.config ["num_action"] - 1:
+            done = True
         else:
-            corrector = self.merger
-        if self.type == 'train':
-            patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask, self.gt_lbl], self.corrector_size)
-        else:
-            patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask], self.corrector_size)
+            if (self.config ["continuous"]):
+                y_apx, x_apx = action [0], action [1]
+                action_index = [0]
+                error_index = self.approx2index (y_apx, x_apx, self.raw.shape)
+            else:
+                action_index = self.int2index (action, self.agent_out_shape)
+                error_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
+            if action_index [0] == 0:
+                corrector = self.spliter
+            else:
+                corrector = self.merger
+            if self.type == 'train':
+                patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask, self.gt_lbl], self.corrector_size)
+            else:
+                patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask], self.corrector_size)
 
-        new_prob = corrector (patches [0], patches [2], gpu_id=self.gpu_id)
-        patches [2][::] = new_prob
-        new_label = label (self.prob > self.cell_thres, background=0).astype (np.int32)
-        if self.type == 'train':
-            new_score = self.metric (self.gt_lbl, new_label)
-            # reward = (new_score - self.old_score) * 10
-            reward = 0
-            self.old_score = new_score
-            # print ('current score:', self.old_score)
-        else:
-            reward = 0
-        patches [3][::] = int (1.0 * self.step_cnt / self.T * 255.0)
-        new_label = self.shuffle_lbl (new_label)
-        self.lbl [::,::] = self.transform_lbl (new_label.astype (np.float32))
+            new_prob = corrector (patches [0], patches [2], gpu_id=self.gpu_id)
+            patches [2][::] = new_prob
+            new_label = label (self.prob > self.cell_thres, background=0).astype (np.int32)
+            if self.type == 'train':
+                new_score = self.metric (self.gt_lbl, new_label)
+                reward = 0
+                self.old_score = new_score
+            else:
+                reward = 0
+            patches [3][::] = int (1.0 * self.step_cnt / self.T * 255.0)
+            new_label = self.shuffle_lbl (new_label)
+            self.lbl [::,::] = self.transform_lbl (new_label.astype (np.float32))
 
 
-        if (self.step_cnt >= self.T):
-            # reward += self.old_score * 10
+        if (self.step_cnt >= self.T or done):
             reward = reward_scaler (self.old_score, self.config["alpha"], self.config["beta"])
             done = True
         else:
@@ -480,11 +488,7 @@ class Voronoi_env (gym.Env):
         raw = np.repeat (np.expand_dims (self.raw, -1), 3, -1).astype (np.uint8)
         prob = np.repeat (np.expand_dims (self.prob, -1), 3, -1).astype (np.uint8)
         info_mask = np.repeat (np.expand_dims (self.info_mask, -1), 3, -1).astype (np.uint8)
-        # print ("max :", self.max_lbl)
         lbl = (self.lbl * self.max_lbl / 255.0).astype (np.int32)
-        # plt.imshow (lbl)
-        # plt.show ()
-        # print ('current rand_index:', self.metric (self.gt_lbl, lbl))
         lbl = lbl2rgb (lbl)
         gt_lbl = lbl2rgb (self.gt_lbl)
 

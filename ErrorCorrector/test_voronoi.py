@@ -13,16 +13,18 @@ import torch.optim as optim
 
 from CorrectorModule.models import FusionNet
 from CorrectorModule.corrector_utils import *
+from utils import *
 
 
 IN_CH = 2
 OUT_CH = 1
 FEATURES = [16, 32, 64, 128]
+continuous = True
 
 gpu_id = 0
 def setup_env_conf ():
-    spliter = spliter_thres
-    merger = merger_thres
+    spliter = spliter_thres_fn
+    merger = merger_thres_fn
 
     env_conf = {
         "corrector_size": [96, 96], 
@@ -31,18 +33,24 @@ def setup_env_conf ():
         "cell_thres": int (255 * 0.5),
         "T": 6,
         "agent_out_shape": [1, 4, 4],
-        "observation_shape": [2, 256, 256],
+        "observation_shape": [3, 256, 256],
         "env_gpu": 0,
         "reward_thres": 0.5,
         "num_segs": 40,
-        "merge_err": False,
-        "split_err": True
+        "merge_err": True,
+        "split_err": False,
+        "continuous": continuous,
+        "use_stop": False,
+        "num_err": 6,
+        "alpha": 5,
+        "beta": 2,
     }
     if env_conf ["split_err"]:
-        env_conf ["spliter"] = merger_thres
+        env_conf ["spliter"] = merger_thres_fn
         print ("use merger_thres")
-
     env_conf ["num_action"] = int (np.prod (env_conf ['agent_out_shape']))
+    if env_conf ["continuous"]:
+        env_conf ["num_action"] = 2
     env_conf ["num_feature"] = env_conf ['observation_shape'][0]
     return env_conf
 
@@ -56,8 +64,12 @@ def obs2tensor (obs):
     return ret
 
 def setup_rl_model (env, env_conf):
-    model = A3Clstm (env_conf ["observation_shape"], 
+    if env_conf ["continuous"]:
+        model = A3Clstm_continuous (env_conf ["observation_shape"], 
                         env_conf["num_action"], 512)
+    else:
+        model = A3Clstm (env_conf ["observation_shape"], 
+                            env_conf["num_action"], 512)
     if gpu_id >= 0:
         model = model.cuda ()
     return model
@@ -73,11 +85,12 @@ else:
 done = False
 cnt = 0
 
-for i in range (env.agent_out_shape [1]):
-    for j in range (env.agent_out_shape [2]):
-        print (str (cnt), end='\t', flush=True)
-        cnt += 1
-    print ()
+if not continuous:
+    for i in range (env.agent_out_shape [1]):
+        for j in range (env.agent_out_shape [2]):
+            print (str (cnt), end='\t', flush=True)
+            cnt += 1
+        print ()
 
 done = False
 obs = env.reset ()
@@ -93,27 +106,49 @@ print (obs.shape)
 while not done:
     
     obs_t = obs2tensor (obs)
-    value, logit, (hx, cx) = model ((Variable (obs_t), (hx, cx)))
-    prob = F.softmax(logit, dim=1)
-    log_prob = F.log_softmax(logit, dim=1)
-    action = prob.max (1)[1].data.cpu ().numpy () [0]
-    action = int (input ('action = '))
+    if not continuous:
+        value, logit, (hx, cx) = model ((Variable (obs_t), (hx, cx)))
+        prob = F.softmax(logit, dim=1)
+        log_prob = F.log_softmax(logit, dim=1)
+        action = prob.max (1)[1].data.cpu ().numpy () [0]
+        action = int (input ('action = '))
+        prob_np = prob.data.cpu ().numpy ()
+        print ("______________________________")
+        print ("Prob: ")
+        print (prob_np)
+        action_index = env.int2index (action, env.agent_out_shape)
+        error_index = env.index2validrange (action_index [1:], env.agent_out_shape [1:])
+        print ("action: ", action)
+        print ("action index: ", action_index)
+        print ("error index: ", error_index)
+    else:
+        value, mu, sigma, (hx, cx) = model (
+            (Variable(obs_t), (hx, cx)))
+        mu = torch.clamp(mu.data, -1.0, 1.0)
 
-    prob_np = prob.data.cpu ().numpy ()
-    print ("______________________________")
-    print ("Prob: ")
-    print (prob_np)
-    # for i in range (env_config ['agent_out_shape'][1]):
-    #     for j in range (env_config ['agent_out_shape'][2]):
-    #         print ("{:.3f}".format (prob_np [i,j]), end='\t')
-    #     print ()
+        sigma = sigma + 1e-3
+        eps = torch.randn (mu.size()).cuda ()
+        eps = Variable (eps)
+        action = (mu + sigma.sqrt () * eps).data
+        action = torch.clamp (action, -1.0, 1.0)
+        
+
+        act = Variable (action)
+        prob = normal (act, mu, sigma, gpu_id, gpu=gpu_id >= 0)
+        action = action.cpu().numpy()[0]
+
+        # y_apx = float (input ("y_apx = "))
+        # x_apx = float (input ("x_apx = "))
+        # action = [y_apx, x_apx]
+
+        y_apx, x_apx = action [0], action [1]
+        error_index = env.approx2index (y_apx, x_apx, env.raw.shape)
+        print ("mu: ", mu, "sigma", sigma)
+        print ("action_apx", y_apx, x_apx)
+        print ("Action: ", error_index)
+        print ("Prob: ", prob)
 
 
-    action_index = env.int2index (action, env.agent_out_shape)
-    error_index = env.index2validrange (action_index [1:], env.agent_out_shape [1:])
-    print ("action: ", action)
-    print ("action index: ", action_index)
-    print ("error index: ", error_index)
 
     cnt = 0
     

@@ -4,6 +4,8 @@ import torch
 import json
 import logging
 import math as m
+from torch.autograd import Variable
+
 
 
 def setup_logger(logger_name, log_file, level=logging.INFO):
@@ -18,6 +20,17 @@ def setup_logger(logger_name, log_file, level=logging.INFO):
     l.addHandler(fileHandler)
     l.addHandler(streamHandler)
 
+def build_blend_weight (shape):
+    # print ("patch shape = ", shape)
+    yy, xx = np.meshgrid (
+            np.linspace(-1,1,shape[0], dtype=np.float32),
+            np.linspace(-1,1,shape[1], dtype=np.float32)
+        )
+    d = np.sqrt(xx*xx+yy*yy)
+    sigma, mu = 0.5, 0.0
+    v_weight = 1e-6+np.exp(-( (d-mu)**2 / ( 2.0 * sigma**2 ) ) )
+    v_weight = v_weight/v_weight.max()
+    return v_weight
 
 def read_config(file_path):
     """Read JSON config."""
@@ -62,6 +75,18 @@ def weights_init(m):
 def reward_scaler (r, alpha, beta):
     r = m.pow (alpha, (r * beta)) / m.pow (alpha, 1 * beta)
     return r
+
+def normal(x, mu, sigma, gpu_id, gpu=False):
+    pi = np.array([m.pi])
+    pi = torch.from_numpy(pi).float()
+    if gpu:
+        with torch.cuda.device(gpu_id):
+            pi = Variable(pi).cuda()
+    else:
+        pi = Variable(pi)
+    a = (-1 * (x - mu).pow(2) / (2 * sigma)).exp()
+    b = 1 / (2 * sigma * pi.expand_as(sigma)).sqrt()
+    return a * b
 
 if __name__ == "__main__":
     r = float (input ())

@@ -111,11 +111,16 @@ parser.add_argument(
     nargs='+',
     help='GPUs to use [-1 CPU only] (default: -1)')
 
-parser.add_argument(
-    '--env-gpu',
-    type=int,
-    default=0,
-    help='GPUs to use [-1 CPU only] (default: -1)')
+parser.add_argument (
+    '--use-stop', 
+    action='store_true'
+)
+
+# parser.add_argument(
+#     '--env-gpu',
+#     type=int,
+#     default=0,
+#     help='GPUs to use [-1 CPU only] (default: -1)')
 
 parser.add_argument(
     '--amsgrad',
@@ -140,7 +145,7 @@ parser.add_argument(
 parser.add_argument (
     '--train-log-period',
     type=int,
-    default=32,
+    default=96,
     metavar='TLP',
 )
 
@@ -148,19 +153,18 @@ parser.add_argument (
     '--spliter',
     default='FusionNet',
     metavar='SPL',
-    choices=['FusionNet', 'Thres'])
+    choices=['FusionNet', 'Thres', 'UNet'])
 
 parser.add_argument (
     '--merger',
     default='FusionNet',
     metavar='MER',
-    choices=['FusionNet', 'Thres'])
+    choices=['FusionNet', 'Thres', 'UNet'])
 
 parser.add_argument(
     '--shared-optimizer',
-    default=False,
-    metavar='SO',
-    help='use an optimizer without shared statistics.')
+    action='store_true'
+)
 
 parser.add_argument (
     '--hidden-feat',
@@ -178,20 +182,18 @@ parser.add_argument (
 
 parser.add_argument(
     '--merge-err',
-    default=False,
-    metavar='SO',
-    help='use an optimizer without shared statistics.')
+    action='store_true'
+)
 
 parser.add_argument(
     '--split-err',
-    default=True,
-    metavar='SO',
-    help='use an optimizer without shared statistics.')
+    action='store_true'
+)
 
 parser.add_argument (
     '--alpha',
     type=float,
-    default=5,
+    default=4,
     metavar='RT'
 )
 
@@ -202,42 +204,94 @@ parser.add_argument (
     metavar='RT'
 )
 
-def setup_env_conf (args):
-    if args.env == "EM_env":
-        if args.merger == 'FusionNet':
-            merger = merger_FusionNet
-        else:
-            merger = merger_thres
-    else:
-        merger = merger_thres
+parser.add_argument (
+    '--impr-fusion',
+    type=str,
+    default=None,
+   
+    metavar='if'
+)
 
-    if args.env == "EM_env":
+parser.add_argument (
+    '--impr-unet',
+    type=str,
+    default=None,
+    metavar='if'
+)
+
+parser.add_argument (
+    '--prob-path',
+    type=str,
+    default='Data/train/deploy/normal.tif'
+)
+
+parser.add_argument (
+    '--prob-path-test',
+    type=str,
+    default='Data/test/deploy/normal.tif'
+)
+
+parser.add_argument (
+    '--gauss-blending',
+    action='store_true'
+)
+
+parser.add_argument (
+    '--continuous',
+    action='store_true'
+)
+
+parser.add_argument (
+    '--num-err',
+    type=int,
+    default=6
+)
+
+def setup_env_conf (args):
+    if "EM_env" in args.env:
+        if args.merger == 'FusionNet':
+            merger = merger_FusionNet_fn
+        elif args.spliter == "Thres":
+            merger = merger_thres_fn
+        elif args.spliter == "UNet":
+            merger = unet_160_fn
+    else:
+        merger = merger_thres_fn
+
+    if "EM_env" in args.env:
         if args.spliter == 'FusionNet':
-            spliter = spliter_FusionNet
-        else:
-            spliter = spliter_thres
+            spliter = spliter_FusionNet_fn
+        elif args.spliter == "Thres":
+            spliter = spliter_thres_fn
+        elif args.spliter == "UNet":
+            spliter = unet_96_fn
     else:
         #############Single case error###############
         if args.merge_err:
-            spliter = spliter_thres
+            spliter = spliter_thres_fn
         else:
-            spliter = merger_thres
+            spliter = merger_thres_fn
 
     env_conf = {
         "corrector_size": [96, 96], 
         "spliter": spliter,
         "merger": merger,
-        "cell_thres": int (255 * 0.5),
+        "cell_thres": int (255 * 0.35),
         "T": args.max_episode_length,
-        "agent_out_shape": [1, 4, 4],
-        "observation_shape": [2, 256, 256],
-        "env_gpu": args.env_gpu,
+        "agent_out_shape": [1, 5, 5],
+        "observation_shape": [3, 256, 256],
         "reward_thres": args.reward_thres,
         "num_segs": 40,
         "split_err": args.split_err,
         "merge_err": args.merge_err,
         "alpha": args.alpha,
-        "beta": args.beta
+        "beta": args.beta,
+        "prob_path": args.prob_path,
+        "prob_path_test": args.prob_path_test,
+        "gauss-blending": args.gauss_blending,
+        "continuous": args.continuous,
+        "use_stop": args.use_stop,
+        "num_err": args.num_err
     }
     if (args.env != "EM_env"):
         if args.split_err:
@@ -245,11 +299,42 @@ def setup_env_conf (args):
         if args.merge_err:
             args.env += "_merge"
 
+    if args.continuous:
+        args.env += '_cont'
+
+    if args.impr_fusion is not None:
+        print ("Train improve-FusionNet ")
+        args.env += "_impr_fusion_" + args.impr_fusion
+
+    if args.impr_unet is not None:
+        print ("Train improve-unet ")
+        args.env += "_impr_unet_" + args.impr_unet
+
     args.log_dir += args.env + "/"
 
     env_conf ["num_action"] = int (np.prod (env_conf ['agent_out_shape']))
+    if env_conf ["use_stop"]:
+        env_conf ["num_action"] += 1
+    if args.continuous:
+        env_conf ["num_action"] = 2
     env_conf ["num_feature"] = env_conf ['observation_shape'][0]
     return env_conf
+
+def get_cell_prob (lbl, dilation, erosion):
+    ESP = 1e-5
+    elevation_map = []
+    for img in lbl:
+        elevation_map += [sobel (img)]
+    elevation_map = np.array (elevation_map)
+    elevation_map = elevation_map > ESP
+    cell_prob = ((lbl > 0) ^ elevation_map) & (lbl > 0)
+    for i in range (len (cell_prob)):
+        for j in range (erosion):
+            cell_prob [i] = binary_erosion (cell_prob [i])
+    for i in range (len (cell_prob)):
+        for j in range (dilation):
+            cell_prob [i] = binary_dilation (cell_prob [i])
+    return np.array (cell_prob, dtype=np.uint8) * 255
 
 def get_data (path, args):
     train_path = natsorted (glob.glob(path + 'A/*.tif'))
@@ -261,13 +346,19 @@ def get_data (path, args):
         X_train = X_train [0]
     if (len (y_train) > 0):
         y_train = y_train [0]
+        gt_prob = get_cell_prob (y_train, 0, 0)
+        y_train = []
+        for img in gt_prob:
+            y_train += [label (img).astype (np.int32)]
+        y_train = np.array (y_train)
     else:
         y_train = np.zeros_like (X_train)
     return X_train, y_train
 
 def setup_data (env_conf):
     raw , gt_lbl = get_data (path='Data/train/', args=None)
-    prob = io.imread ('Data/train-membranes-idsia.tif')
+    prob = io.imread (env_conf["prob_path"])
+    prob = np.clip (prob, int (255 * 0.1), int (255 * 0.9))
     ##################################
     # prob = np.zeros_like (prob)
     ##################################
@@ -275,10 +366,18 @@ def setup_data (env_conf):
     for img in prob:
         lbl += [label (img > env_conf ['cell_thres'])]
     lbl = np.array (lbl)
-    raw = raw 
-    lbl = lbl
-    prob = prob 
-    gt_lbl = gt_lbl 
+
+    return raw, lbl, prob, gt_lbl
+
+def setup_data_test (env_conf):
+    raw, gt_lbl = get_data (path='Data/test/', args=None)
+    prob = io.imread (env_conf["prob_path_test"])
+    prob = np.clip (prob, int (255 * 0.1), int (255 * 0.9))
+    lbl = []
+    for img in prob:
+        lbl += [label (img > env_conf ['cell_thres'])]
+    lbl = np.array (lbl)
+    gt_lbl = np.zeros (lbl.shape, dtype=np.uint8) + 127
 
     return raw, lbl, prob, gt_lbl
 
@@ -293,12 +392,18 @@ if __name__ == '__main__':
         mp.set_start_method('spawn')
     env_conf = setup_env_conf (args)
 
-    if args.env == "EM_env":
+    if "EM_env" in args.env:
         raw, lbl, prob, gt_lbl = setup_data (env_conf)
+        raw_test, lbl_test, prob_test, gt_lbl_test = setup_data_test (env_conf)
 
     # env =EM_env (raw, lbl, prob, env_conf, 'train', gt_lbl)
-    shared_model = A3Clstm (env_conf ["observation_shape"], 
-                        env_conf["num_action"], args.hidden_feat)
+    if not args.continuous:
+        shared_model = A3Clstm (env_conf ["observation_shape"], 
+                            env_conf["num_action"], args.hidden_feat)
+    else:
+        shared_model = A3Clstm_continuous (env_conf ["observation_shape"], 
+                            env_conf["num_action"], args.hidden_feat)
+
 
     if args.load:
         saved_state = torch.load(
@@ -318,16 +423,23 @@ if __name__ == '__main__':
         optimizer = None
 
     processes = []
-    if args.env == "EM_env":
-        p = mp.Process(target=test, args=(args, shared_model, env_conf, [raw, lbl, prob, gt_lbl]))
+    if "EM_env" in args.env:
+        p = mp.Process(target=test, args=(args, shared_model, env_conf, [raw, lbl, prob, gt_lbl], True))
     else:
         p = mp.Process(target=test, args=(args, shared_model, env_conf))
     p.start()
     processes.append(p)
     time.sleep(1)
 
+    if "EM_env" in args.env:
+        p = mp.Process(target=test, args=(args, shared_model, env_conf, 
+            [raw_test, lbl_test, prob_test, gt_lbl_test], False))
+        p.start()
+        processes.append(p)
+        time.sleep(1)
+
     for rank in range(0, args.workers):
-        if args.env == "EM_env":
+        if "EM_env" in args.env:
             p = mp.Process(
                 target=train, args=(rank, args, shared_model, optimizer, env_conf, [raw, lbl, prob, gt_lbl]))
         else:

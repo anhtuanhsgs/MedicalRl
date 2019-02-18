@@ -91,7 +91,7 @@ class EM_env (gym.Env):
             idx_ret += [int (idx[i] / (size [i] - 1) * (self.valid_range [i][1] - self.valid_range [i][0]) + self.valid_range [i][0])]
         return idx_ret
 
-    def approx2index (self, x_apx, y_apx, size):
+    def approx2index (self, y_apx, x_apx, size):
         y = int (y_apx * (self.valid_range [0][1] - self.valid_range [0][0]) + self.valid_range [0][0])
         x = int (x_apx * (self.valid_range [1][1] - self.valid_range [1][0]) + self.valid_range [1][0])
         return y, x
@@ -134,9 +134,9 @@ class EM_env (gym.Env):
         self.step_cnt += 1
 
         if (self.config ["continuous"]):
-            _, x_apx, y_apx = action
+            _, y_apx, x_apx = action
             action_index = action
-            error_index = self.approx2index (x_apx, y_apx, self.raw.shape)
+            error_index = self.approx2index (y_apx, x_apx, self.raw.shape)
         else:
             action_index = self.int2index (action, self.agent_out_shape)
             error_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
