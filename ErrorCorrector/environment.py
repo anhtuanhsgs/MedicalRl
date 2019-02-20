@@ -24,7 +24,7 @@ sys.path.append('../')
 
 from misc.Voronoi import *
 
-DEBUG = True
+DEBUG = False
 
 def rand_score (gt_lbl, pred_lbl):
     ret = adjusted_rand_score (pred_lbl.flatten (), gt_lbl.flatten ())
@@ -70,14 +70,28 @@ class EM_env (gym.Env):
                             self.observation_shape[1], self.observation_shape[2]), dtype=np.float32)
         
         self.blend_w = None
-        if config ["gauss-blending"]:
-            self.blend_w = build_blend_weight (self.corrector_size)
+        
 
         self.metric = malis_f1_score 
-        self.valid_range = [
-                [self.corrector_size [0] // 2, self.observation_shape[1] - self.corrector_size [0] // 2],
-                [self.corrector_size [1] // 2, self.observation_shape[2] - self.corrector_size [1] // 2]
-            ]
+        if not config ["multires"]:
+            self.valid_range = [
+                    [self.corrector_size [0] // 2, self.observation_shape[1] - self.corrector_size [0] // 2],
+                    [self.corrector_size [1] // 2, self.observation_shape[2] - self.corrector_size [1] // 2]
+                ]
+            if config ["gauss-blending"]:
+                self.blend_w = build_blend_weight (self.corrector_size)
+        else:
+            self.valid_range = []
+            if config ["gauss-blending"]:
+                self.blend_w = []
+            for corrector_size in self.corrector_size:
+                self.valid_range.append ([
+                    [corrector_size [0] // 2, self.observation_shape[1] - corrector_size [0] // 2],
+                    [corrector_size [1] // 2, self.observation_shape[2] - corrector_size [1] // 2]
+                ])
+                if config ["gauss-blending"]:
+                    self.blend_w.append (build_blend_weight (corrector_size))
+
         # print ('valid range', self.valid_range)
 
     def clip (self, imgs):
@@ -141,10 +155,13 @@ class EM_env (gym.Env):
             x = x // l
         return ret [::-1]
 
-    def index2validrange (self, idx, size):
+    def index2validrange (self, idx, size, res_index=-1):
         idx_ret = []
         for i in range (len (idx)):
-            idx_ret += [int (idx[i] / (size [i] - 1) * (self.valid_range [i][1] - self.valid_range [i][0]) + self.valid_range [i][0])]
+            if res_index < 0:
+                idx_ret += [int (idx[i] / (size [i] - 1) * (self.valid_range [i][1] - self.valid_range [i][0]) + self.valid_range [i][0])]
+            else:
+                idx_ret += [int (idx[i] / (size [i] - 1) * (self.valid_range [res_index][i][1] - self.valid_range [res_index][i][0]) + self.valid_range [res_index][i][0])]
         return idx_ret
 
     def aug (self, raw, lbl, mask):
@@ -215,22 +232,36 @@ class EM_env (gym.Env):
             done = True
         else:
             action_index = self.int2index (action, self.agent_out_shape)
-            error_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
+            if self.config ["multires"]:
+                error_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:], res_index=action_index[0])
+            else:
+                error_index = self.index2validrange (action_index [1:], self.agent_out_shape [1:])
+
             if action_index [0] == 0:
                 corrector = self.spliter
             else:
                 corrector = self.merger
             if self.type == 'train':
-                patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask, self.gt_lbl], self.corrector_size)
+                if self.config ["multires"]:
+                    patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask, self.gt_lbl], self.corrector_size [action_index [0]])
+                else:
+                    patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask, self.gt_lbl], self.corrector_size)
             else:
-                patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask], self.corrector_size)
+                if self.config ["multires"]:
+                    patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask], self.corrector_size [action_index [0]])
+                else:
+                    patches = self.crop_center (error_index, [self.raw, self.lbl, self.prob, self.info_mask], self.corrector_size)
 
             new_prob = corrector (patches [0], patches [2], gpu_id=self.gpu_id)
             if self.blend_w is None:
                 patches [2][::] = new_prob
             else:
-                sum_w = self.blend_w * 9 + 1
-                patches [2][::] = (new_prob * 9 * self.blend_w + patches [2][::]) / sum_w
+                if self.config ["multires"]:
+                    sum_w = self.blend_w [action_index [0]] * 9 + 1
+                    patches [2][::] = (new_prob * 9 * self.blend_w [action_index [0]] + patches [2][::]) / sum_w
+                else:
+                    sum_w = self.blend_w * 9 + 1
+                    patches [2][::] = (new_prob * 9 * self.blend_w + patches [2][::]) / sum_w
 
             new_label = label (self.prob > self.cell_thres, background=0).astype (np.int32)
             if self.type == 'train':

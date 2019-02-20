@@ -88,7 +88,7 @@ def unet_96_fn (gpu_id):
     return unet_96
 
 def unet_160_fn (gpu_id):
-    checkponit = 'CorrectorModule/checkpoints/UNet_normal_WBCE_96_02/checkpoint_321000.pth.tar'
+    checkponit = 'CorrectorModule/checkpoints/UNet_normal_WBCE_160_01/checkpoint_461000.pth.tar'
     net = UNet (IN_CH, FEATURES, OUT_CH)
     net = init_model (net, gpu_id, checkponit)
 

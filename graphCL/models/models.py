@@ -202,7 +202,9 @@ class UNet (nn.Module):
         self.up2 = UNet_up(features[2] * 2, features[1])
         self.up3 = UNet_up(features[1] * 2, features[0])
         self.up4 = UNet_up(features[0] * 2, features[0])
-        self.outc = outconv(features [0], out_ch)
+        self.actor = outconv(features [0], out_ch)
+        self.critic = outconv (features [0], 1)
+
 
     def forward(self, x):
         x1 = self.inc(x)
@@ -215,16 +217,21 @@ class UNet (nn.Module):
         x = self.up2(x, x3)
         x = self.up3(x, x2)
         x = self.up4(x, x1)
-        x = self.outc(x)
-        return F.sigmoid(x)
+        actor = self.actor (x)
+        critic = self.critic (x)
+        return critic, actor
 
 
 if __name__ == "__main__":
-    FEATURES = [16, 32, 64, 128, 256]
-    model = UNet (in_ch=2, features=FEATURES, out_ch=1)
-    x = torch.zeros ((1,2,256,256), dtype=torch.float32)
-    # y = model (x)
-    checkpoint = torch.load('checkpoints/UNet_normal_WBCE_160_01/checkpoint_461000.pth.tar', map_location='cpu')
-    model.load_state_dict (checkpoint ["state_dict"])
-    y = model (x)
-    print (y.shape)
+    FEATURES = [16, 32, 64, 128]
+    model = UNet (in_ch=5, features=FEATURES, out_ch=2)
+    x = torch.zeros ((1,5,256,256), dtype=torch.float32)
+    value, logit = model (x)
+    print (value.shape, logit.shape)
+    prob = F.softmax (logit, dim=1)
+    print (prob.shape)
+    print (prob.multinomial ().data.shape)
+
+    a = np.array ([[1,2],
+                    [2,3],
+                    [3,4]])

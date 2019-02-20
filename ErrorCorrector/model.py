@@ -229,7 +229,7 @@ class A3Clstm_continuous (torch.nn.Module):
         hx, cx = self.lstm(x, (hx, cx))
         x = hx
 
-        mu = F.softsign (self.actor_mu(x))
+        mu = F.softsign (self.actor_mu(x)) * 2
         sigma = F.softplus (self.actor_sigma (x))
 
         return self.critic_linear(x), mu, sigma, (hx, cx)

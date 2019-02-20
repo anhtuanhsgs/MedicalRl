@@ -247,13 +247,18 @@ parser.add_argument (
     default=6
 )
 
+parser.add_argument (
+    '--multires',
+    action='store_true',
+)
+
 def setup_env_conf (args):
     if "EM_env" in args.env:
         if args.merger == 'FusionNet':
             merger = merger_FusionNet_fn
-        elif args.spliter == "Thres":
+        elif args.merger == "Thres":
             merger = merger_thres_fn
-        elif args.spliter == "UNet":
+        elif args.merger == "UNet":
             merger = unet_160_fn
     else:
         merger = merger_thres_fn
@@ -272,8 +277,18 @@ def setup_env_conf (args):
         else:
             spliter = merger_thres_fn
 
+    if args.multires:
+        spliter = unet_96_fn
+        merger = unet_160_fn
+        args.env += '_multires'
+
+    if args.multires:
+        corrector_size = [[96, 96], [160, 160]]
+    else:
+        corrector_size = [96, 96]
+
     env_conf = {
-        "corrector_size": [96, 96], 
+        "corrector_size": corrector_size, 
         "spliter": spliter,
         "merger": merger,
         "cell_thres": int (255 * 0.35),
@@ -291,8 +306,13 @@ def setup_env_conf (args):
         "gauss-blending": args.gauss_blending,
         "continuous": args.continuous,
         "use_stop": args.use_stop,
-        "num_err": args.num_err
+        "num_err": args.num_err,
+        "multires": args.multires
     }
+
+    if args.multires:
+        env_conf ["agent_out_shape"][0] = 2
+
     if (args.env != "EM_env"):
         if args.split_err:
             args.env += "_split"
@@ -423,20 +443,20 @@ if __name__ == '__main__':
         optimizer = None
 
     processes = []
-    if "EM_env" in args.env:
-        p = mp.Process(target=test, args=(args, shared_model, env_conf, [raw, lbl, prob, gt_lbl], True))
-    else:
-        p = mp.Process(target=test, args=(args, shared_model, env_conf))
-    p.start()
-    processes.append(p)
-    time.sleep(1)
+    # if "EM_env" in args.env:
+    #     p = mp.Process(target=test, args=(args, shared_model, env_conf, [raw, lbl, prob, gt_lbl], True))
+    # else:
+    #     p = mp.Process(target=test, args=(args, shared_model, env_conf))
+    # p.start()
+    # processes.append(p)
+    # time.sleep(1)
 
-    if "EM_env" in args.env:
-        p = mp.Process(target=test, args=(args, shared_model, env_conf, 
-            [raw_test, lbl_test, prob_test, gt_lbl_test], False))
-        p.start()
-        processes.append(p)
-        time.sleep(1)
+    # if "EM_env" in args.env:
+    #     p = mp.Process(target=test, args=(args, shared_model, env_conf, 
+    #         [raw_test, lbl_test, prob_test, gt_lbl_test], False))
+    #     p.start()
+    #     processes.append(p)
+    #     time.sleep(1)
 
     for rank in range(0, args.workers):
         if "EM_env" in args.env:
