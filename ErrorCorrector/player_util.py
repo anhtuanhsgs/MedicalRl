@@ -44,7 +44,7 @@ class Agent (object):
             self.action = action.cpu().numpy() [0][0]
             log_prob = log_prob.gather(1, Variable(action))
             state, self.reward, self.done, self.info = self.env.step(
-                action.cpu().numpy().squeeze () [0])
+                action.cpu().numpy().squeeze ())
         else:
             with torch.no_grad():
                 action = prob.max (1)[1].data

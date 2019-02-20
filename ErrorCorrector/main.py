@@ -443,20 +443,20 @@ if __name__ == '__main__':
         optimizer = None
 
     processes = []
-    # if "EM_env" in args.env:
-    #     p = mp.Process(target=test, args=(args, shared_model, env_conf, [raw, lbl, prob, gt_lbl], True))
-    # else:
-    #     p = mp.Process(target=test, args=(args, shared_model, env_conf))
-    # p.start()
-    # processes.append(p)
-    # time.sleep(1)
+    if "EM_env" in args.env:
+        p = mp.Process(target=test, args=(args, shared_model, env_conf, [raw, lbl, prob, gt_lbl], True))
+    else:
+        p = mp.Process(target=test, args=(args, shared_model, env_conf))
+    p.start()
+    processes.append(p)
+    time.sleep(1)
 
-    # if "EM_env" in args.env:
-    #     p = mp.Process(target=test, args=(args, shared_model, env_conf, 
-    #         [raw_test, lbl_test, prob_test, gt_lbl_test], False))
-    #     p.start()
-    #     processes.append(p)
-    #     time.sleep(1)
+    if "EM_env" in args.env:
+        p = mp.Process(target=test, args=(args, shared_model, env_conf, 
+            [raw_test, lbl_test, prob_test, gt_lbl_test], False))
+        p.start()
+        processes.append(p)
+        time.sleep(1)
 
     for rank in range(0, args.workers):
         if "EM_env" in args.env:
