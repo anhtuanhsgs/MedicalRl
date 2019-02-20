@@ -40,7 +40,10 @@ class Voronoi_env (gym.Env):
 
     def reset (self):
         self.step_cnt = 0
-        self.raw = create_voronoi_2d (self.rng, self.num_segs, debug=debug, size=self.config ["size"])
+        if not debug:
+            self.raw = create_voronoi_2d (self.rng, self.num_segs, debug=debug, size=self.config ["size"])
+        else:
+            self.raw = np.zeros (self.size)
         self.prob = get_boudary (self.raw [None], 0, 1) [0].astype (np.float32)
         # self.gt_lbl = label (self.prob > 128).astype (np.int32)
         self.gt_lbl = self.raw.astype (np.int32)
@@ -138,6 +141,7 @@ class Voronoi_env (gym.Env):
         self.new_lbl = self.lbl * 2 + action
         done = False
         reward = self.split_reward_step ()
+        reward = np.zeros_like (reward)
         self.lbl = self.new_lbl
         self.mask [self.step_cnt:self.step_cnt+1] += (2 * action - 1) * 255
 

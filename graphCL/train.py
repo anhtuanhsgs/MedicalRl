@@ -120,7 +120,7 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets=None):
             # print (player.rewards [i])
             policy_loss = policy_loss - \
                 (player.log_probs[i] * Variable(gae)).mean () - \
-                (0.01 * player.entropies[i]).mean ()
+                (0.05 * player.entropies[i]).mean ()
 
         player.model.zero_grad ()
         sum_loss = (policy_loss + value_loss)
