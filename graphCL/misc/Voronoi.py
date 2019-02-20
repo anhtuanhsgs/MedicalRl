@@ -92,7 +92,7 @@ def voronoi_finite_polygons_2d(vor, radius=None):
     return new_regions, np.asarray(new_vertices)
 
 
-def create_voronoi_2d (rng, num_segs=40, debug=False):
+def create_voronoi_2d (rng, num_segs=40, debug=False, size=(256, 256)):
     # make up data points
     # np.random.seed(1234)
     points = rng.rand(num_segs, 2)
@@ -133,6 +133,7 @@ def create_voronoi_2d (rng, num_segs=40, debug=False):
     data = (data - minval + 1) / (maxval - minval + 1) * 255
     data = data.astype (np.uint8)
     plt.close ()
+    data = resize (data, size, order=0, mode='reflect', preserve_range=True)
     return data 
 
 from skimage.transform import resize

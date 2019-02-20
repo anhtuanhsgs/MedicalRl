@@ -222,16 +222,44 @@ class UNet (nn.Module):
         return critic, actor
 
 
+def to_numpy (tensor):
+    return tensor.cpu ().numpy ().squeeze ()
+
+def debug (tensor):
+    tensor_np = to_numpy (tensor)
+    shape = tensor_np.shape
+    for i in range (shape [0]):
+        print (tensor_np [i])
+
 if __name__ == "__main__":
     FEATURES = [16, 32, 64, 128]
     model = UNet (in_ch=5, features=FEATURES, out_ch=2)
     x = torch.zeros ((1,5,256,256), dtype=torch.float32)
     value, logit = model (x)
-    print (value.shape, logit.shape)
-    prob = F.softmax (logit, dim=1)
-    print (prob.shape)
-    print (prob.multinomial ().data.shape)
 
-    a = np.array ([[1,2],
-                    [2,3],
-                    [3,4]])
+    # print (torch.rand ((1, 4, 4)))
+    # # prob = prob.transpose (1, -1)
+    # print (prob.shape)
+    # prob = prob.reshape (-1, 2)
+    # print (prob.shape)
+    # distribution = torch.distributions.Categorical
+    # m = distribution (prob)
+    # print (m.sample ().shape)
+
+    logit = torch.rand ((1, 2, 3, 4))
+    prob = F.softmax (logit, 1)
+    debug (prob)
+    prob_tp = prob.permute (0, 2, 3, 1)
+    distribution = torch.distributions.Categorical (prob_tp)
+    sample = distribution.sample ()
+    print (prob_tp.shape)
+    shape = prob_tp.shape
+    action = sample.reshape (1, shape[1], shape[2], 1).permute (0, 3, 1, 2)
+    debug (sample)
+    action_prob = prob.gather (1, action)
+    debug (action_prob)
+    print (action_prob.shape)
+    print (action_prob[0][0].shape)
+
+    # action_max = prob.max (1)[1]
+    # print (action_max.shape)

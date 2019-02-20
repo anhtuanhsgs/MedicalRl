@@ -3,8 +3,8 @@ from setproctitle import setproctitle as ptitle
 import torch
 from environment import *
 from utils import setup_logger
-from model import *
-from player_util import Agent, Agent_continuous
+from models.models import *
+from player_util import Agent
 from torch.autograd import Variable
 import time
 import logging
@@ -36,27 +36,19 @@ def test (args, shared_model, env_conf, datasets=None, hasLbl=True):
 
     if gpu_id >= 0:
         torch.cuda.manual_seed (args.seed)
-    if "EM_env" in args.env:
-        raw, lbl, prob, gt_lbl = datasets
-        env = EM_env (raw, lbl, prob, env_conf, 'train', gt_lbl)
-    else:
-        env = Voronoi_env (env_conf)
+
+    env = Voronoi_env (env_conf)
 
     reward_sum = 0
     start_time = time.time ()
     num_tests = 0
     reward_total_sum = 0
 
-    if not args.continuous:
-        player = Agent (None, env, args, None)
-    else:
-        player = Agent_continuous (None, env, args, None)
+    player = Agent (None, env, args, None)
 
     player.gpu_id = gpu_id
-    if not args.continuous:
-        player.model = A3Clstm (env.observation_space.shape, env_conf["num_action"], args.hidden_feat)
-    else:
-        player.model = A3Clstm_continuous (env.observation_space.shape, env_conf["num_action"], args.hidden_feat)
+    
+    player.model = UNet (env.observation_space.shape [0], args.features, 2)
 
     player.state = player.env.reset ()
     player.state = torch.from_numpy (player.state).float ()
@@ -85,7 +77,7 @@ def test (args, shared_model, env_conf, datasets=None, hasLbl=True):
             flag = False
 
         player.action_test ()
-        reward_sum += player.reward
+        reward_sum += player.reward.mean ()
         renderlist.append (player.env.render ()) 
 
         if player.done:
@@ -96,10 +88,10 @@ def test (args, shared_model, env_conf, datasets=None, hasLbl=True):
             reward_mean = reward_total_sum / num_tests
             if hasLbl:
                 log ['{}_log'.format (args.env)].info (
-                    "VALID: Time {0}, t0 score {5}, tn score {6}, episode reward {1}, num tests {4}, episode length {2}, reward mean {3:.4f}".
+                    "VALID: Time {0}, episode reward {1}, num tests {4}, episode length {2}, reward mean {3:.4f}".
                     format (
                         time.strftime ("%Hh %Mm %Ss", time.gmtime (time.time () - start_time)),
-                        reward_sum, player.eps_len, reward_mean, num_tests, player.origin_score, player.env.old_score))
+                        reward_sum, player.eps_len, reward_mean, num_tests))
 
             recent_episode_scores += [reward_sum]
             if len (recent_episode_scores) > 200:
@@ -122,10 +114,7 @@ def test (args, shared_model, env_conf, datasets=None, hasLbl=True):
                 if hasLbl:
                     print ("----------------------VALID SET--------------------------")
                     print ("Log test #:", num_tests)
-                    print ("Actions :", player.actions)
-                    print ("Actions transformed: ")
-                    print (player.actions_explained)
-                    print ("rewards: ", player.rewards)
+                    print ("rewards: ", player.reward.mean ())
                     print ("sum rewards: ", reward_sum)
                     print ("------------------------------------------------")
 

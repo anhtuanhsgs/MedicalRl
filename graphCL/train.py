@@ -4,8 +4,8 @@ import torch
 import torch.optim as optim
 from environment import *
 from utils import ensure_shared_grads
-from model import *
-from player_util import Agent, Agent_continuous
+from models.models import *
+from player_util import Agent
 from torch.autograd import Variable
 from Utils.Logger import Logger
 
@@ -36,12 +36,10 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets=None):
     player = Agent (None, env, args, None)
 
     player.gpu_id = gpu_id
-    player.model = Unet (env.observation_space.shape [0], args.features, 2)
+    player.model = UNet (env.observation_space.shape [0], args.features, 2)
 
     player.state = player.env.reset ()
     player.state = torch.from_numpy (player.state).float ()
-    old_score = player.env.old_score
-    final_score = 0
 
     if gpu_id >= 0:
         with torch.cuda.device (gpu_id):
@@ -65,31 +63,29 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets=None):
         if player.done:
             player.eps_len = 0
             if rank == 0:
-                if 0 <= (train_step % args.train_log_period) < args.max_episode_length:
+                if (0 <= (train_step % args.train_log_period) < args.max_episode_length) and train_step > 0:
                     print ("train: step", train_step, "\teps_reward", eps_reward)
-                pinned_eps_reward = eps_reward
-                eps_reward = 0
+                if train_step > 0:
+                    pinned_eps_reward = eps_reward.mean ()
+                    eps_reward = 0
 
         for step in range(args.num_steps):
             player.action_train ()
             if rank == 0:
-                # if 0 <= (train_step % args.train_log_period) < args.max_episode_length:
-                #     print ("train: step", train_step, "\taction = ", player.action)
-                eps_reward += player.reward
+                eps_reward = player.reward.mean () + eps_reward
             if player.done:
                 break
 
         if player.done:
             # if rank == 0:
             #     print ("----------------------------------------------")
-            final_score = player.env.old_score
             state = player.env.reset ()
             player.state = torch.from_numpy (state).float ()
             if gpu_id >= 0:
                 with torch.cuda.device (gpu_id):
                     player.state = player.state.cuda ()
 
-        R = torch.zeros (1, env_conf ["size"][0], env_conf ["size"][1])
+        R = torch.zeros (1, 1, env_conf ["size"][0], env_conf ["size"][1])
         if not player.done:
             value, _ = player.model(Variable(player.state.unsqueeze(0)))
             R = value.data
@@ -101,25 +97,30 @@ def train (rank, args, shared_model, optimizer, env_conf, datasets=None):
         player.values.append(Variable(R))
         policy_loss = 0
         value_loss = 0
-        gae = torch.zeros(1, 1)
+        gae = torch.zeros(1, 1, env_conf ["size"][0], env_conf ["size"][1])
         if gpu_id >= 0:
             with torch.cuda.device(gpu_id):
                 gae = gae.cuda()
         R = Variable(R)
 
         for i in reversed(range(len(player.rewards))):
-            R = args.gamma * R + player.rewards[i]
-            advantage = R - player.values[i]
-            value_loss = value_loss + (0.5 * advantage * advantage).sum ()
+            if gpu_id >= 0:
+                with torch.cuda.device (gpu_id):
+                    reward_i = torch.tensor (player.rewards [i]).cuda ()
+            else:
+                reward_i = torch.tensor (player.rewards [i])
 
-            delta_t = player.values[i + 1].data * args.gamma + player.rewards[i] - \
+            R = args.gamma * R + reward_i
+            advantage = R - player.values[i]
+            value_loss = value_loss + (0.5 * advantage * advantage).mean ()
+            delta_t = player.values[i + 1].data * args.gamma + reward_i - \
                         player.values[i].data
 
             gae = gae * args.gamma * args.tau + delta_t
             # print (player.rewards [i])
             policy_loss = policy_loss - \
-                (player.log_probs[i] * Variable(gae)).sum () - \
-                (0.01 * player.entropies[i]).sum ()
+                (player.log_probs[i] * Variable(gae)).mean () - \
+                (0.01 * player.entropies[i]).mean ()
 
         player.model.zero_grad ()
         sum_loss = (policy_loss + value_loss)

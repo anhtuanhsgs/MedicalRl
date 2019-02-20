@@ -6,7 +6,7 @@ import torch
 import torch.multiprocessing as mp
 from environment import *
 from utils import read_config
-from model import *
+from models.models import *
 from train import train
 from test import test
 from natsort import natsorted
@@ -63,7 +63,7 @@ parser.add_argument(
 parser.add_argument(
     '--num-steps',
     type=int,
-    default=2,
+    default=1,
     metavar='NS',
     help='number of forward steps in A3C (default: 20)')
 
@@ -134,7 +134,7 @@ parser.add_argument(
 parser.add_argument (
     '--train-log-period',
     type=int,
-    default=96,
+    default=32,
     metavar='TLP',
 )
 
@@ -153,7 +153,7 @@ parser.add_argument (
 parser.add_argument (
     '--radius',
     type=int,
-    default=2,
+    default=11,
 )
 
 parser.add_argument (
@@ -167,11 +167,11 @@ def setup_env_conf (args):
 
     env_conf = {
         "T": args.max_episode_length,
-        "size": [256, 256],
+        "size": [48, 48],
         "num_segs": 40,
         "radius": args.radius
     }
-
+    env_conf ["observation_shape"] = [env_conf ["T"] + 1] + env_conf ["size"]
     args.log_dir += args.env + "/"
 
     return env_conf
@@ -191,14 +191,7 @@ if __name__ == '__main__':
         raw, lbl, prob, gt_lbl = setup_data (env_conf)
         raw_test, lbl_test, prob_test, gt_lbl_test = setup_data_test (env_conf)
 
-    # env =EM_env (raw, lbl, prob, env_conf, 'train', gt_lbl)
-    if not args.continuous:
-        shared_model = A3Clstm (env_conf ["observation_shape"], 
-                            env_conf["num_action"], args.hidden_feat)
-    else:
-        shared_model = A3Clstm_continuous (env_conf ["observation_shape"], 
-                            env_conf["num_action"], args.hidden_feat)
-
+    shared_model = UNet (env_conf ["observation_shape"][0], args.features, 2)
 
     if args.load:
         saved_state = torch.load(

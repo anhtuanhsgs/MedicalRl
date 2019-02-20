@@ -24,10 +24,10 @@ def setup_env_conf ():
 
     env_conf = {
         "T": 3,
-        "size": (256, 256),
+        "size": [96, 96],
         "env_gpu": 0,
         "num_segs": 3,
-        "radius": 1,
+        "radius": 7,
     }
     return env_conf
 
@@ -47,13 +47,13 @@ done = False
 cnt = 0
 
 obs = env.reset ()
-# plt.imshow (env.render ())
-# plt.show ()
+plt.imshow (env.render ())
+plt.show ()
 
 # model = setup_rl_model (env, env_config)
 
 sum_score = 0
-partition = 4
+partition = 3
 
 while not done:
 
@@ -84,8 +84,8 @@ while not done:
     print ("done: ", done)
     plt.imshow (tmp, cmap='gray')
     plt.show ()
-    plt.imshow (reward, cmap='gray')
-    plt.show ()
+    # plt.imshow (reward, cmap='gray')
+    # plt.show ()
     # plt.imshow (env.render ())
     # plt.show ()
     sum_score += reward

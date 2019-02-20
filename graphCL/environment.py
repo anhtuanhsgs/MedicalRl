@@ -27,7 +27,6 @@ class Voronoi_env (gym.Env):
         self.config = config
         self.obs_format = obs_format
         self.type = "train"
-        self.size = (256, 256)
         self.init (config)
 
     def init (self, config):
@@ -36,16 +35,20 @@ class Voronoi_env (gym.Env):
         self.r = config ["radius"]
         self.size = config ["size"]
         self.max_lbl = self.num_segs + 1
-        self.observation_space = Box (-1.0, 1.0, shape=(self.T + 1,) + self.size, dtype=np.float32)
+        self.observation_space = Box (-1.0, 1.0, shape=[self.T + 1] + self.size, dtype=np.float32)
         self.rng = np.random.RandomState(time_seed ())
 
     def reset (self):
         self.step_cnt = 0
-        self.raw = create_voronoi_2d (self.rng, self.num_segs, debug=debug)
+        self.raw = create_voronoi_2d (self.rng, self.num_segs, debug=debug, size=self.config ["size"])
         self.prob = get_boudary (self.raw [None], 0, 1) [0].astype (np.float32)
-        self.gt_lbl = label (self.prob > 128).astype (np.int32)
+        # self.gt_lbl = label (self.prob > 128).astype (np.int32)
+        self.gt_lbl = self.raw.astype (np.int32)
+        # plt.imshow (self.gt_lbl)
+        # plt.show ()
+        # print (self.gt_lbl.dtype)
         self.gt_lbl_cp = np.pad (self.gt_lbl, self.r, 'constant', constant_values=0)
-        self.mask = np.zeros ((self.T,) + self.size, dtype=np.float32)
+        self.mask = np.zeros ([self.T] + self.size, dtype=np.float32)
         self.lbl = np.zeros (self.size, dtype=np.int32)
         self.sum_reward = np.zeros (self.size, dtype=np.float32)
         return self.observation ()
@@ -108,6 +111,8 @@ class Voronoi_env (gym.Env):
                             (((self.gt_lbl != 0) & (self.new_lbl != 0)) | \
                              ((self.gt_lbl != 0) & (self.new_lbl != 0)))
 
+                reward -= (I != I_hat) & (I_hat == False)
+
         # Wrongly classified as background
         reward -= (self.gt_lbl != 0) & (self.new_lbl == 0)
 
@@ -151,11 +156,16 @@ class Voronoi_env (gym.Env):
         lbl = self.lbl.astype (np.int32)
         lbl = lbl2rgb (lbl)
         gt_lbl = lbl2rgb (self.gt_lbl)
+        masks = []
+        for i in range (self.T):
+            mask_i = self.mask [i]
+            mask_i = np.repeat (np.expand_dims (mask_i, -1), 3, -1).astype (np.uint8)
+            masks.append (mask_i)
 
         ret = np.concatenate ([prob,
                 lbl,
                 gt_lbl,
-            ], 1)
+            ] + masks, 1)
 
         return ret
 
