@@ -31,7 +31,11 @@ class Agent (object):
         self.actions_explained = []
 
     def action_train (self, use_max=False):
-        value, logit = self.model (Variable(self.state.unsqueeze(0)))
+        if "Lstm" in self.args.model:
+            value, logit, (self.hx, self.cx) = self.model((Variable(
+            self.state.unsqueeze(0)), (self.hx, self.cx)))
+        else:
+            value, logit = self.model (Variable(self.state.unsqueeze(0)))
         prob = F.softmax(logit, dim=1)
         log_prob = F.log_softmax(logit, dim=1)
         entropy = -(log_prob * prob).sum(1)
@@ -64,7 +68,19 @@ class Agent (object):
 
     def action_test (self):
         with torch.no_grad():
-            value, logit = self.model(Variable (self.state.unsqueeze(0)))
+            if "Lstm" in self.args.model:
+                if self.done:
+                    if self.gpu_id >= 0:
+                        with torch.cuda.device (self.gpu_id):
+                            self.cx, self.hx = self.model.lstm.init_hidden (batch_size=1, use_cuda=True)
+                    else:
+                        self.cx, self.hx = self.model.lstm.init_hidden (batch_size=1, use_cuda=False)
+                else:
+                    self.cx = Variable (self.cx)
+                    self.hx = Variable (self.hx)
+                value, logit, (self.hx, self.cx) = self.model((Variable (self.state.unsqueeze(0)), (self.hx, self.cx)))
+            else:
+                value, logit = self.model(Variable (self.state.unsqueeze(0)))
             
         prob = F.softmax (logit, dim=1)
         action = prob.max (1)[1].data.cpu ().numpy ()

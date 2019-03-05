@@ -70,7 +70,7 @@ parser.add_argument(
 parser.add_argument(
     '--max-episode-length',
     type=int,
-    default=4,
+    default=3,
     metavar='M',
     help='maximum length of an episode (default: 10000)')
 
@@ -146,14 +146,20 @@ parser.add_argument(
 parser.add_argument (
     '--hidden-feat',
     type=int,
-    default=512,
+    default=64,
     metavar='HF'
 )
 
 parser.add_argument (
     '--radius',
     type=int,
-    default=11,
+    default=16,
+)
+
+parser.add_argument (
+    '--speed',
+    type=int,
+    default=2,
 )
 
 parser.add_argument (
@@ -163,18 +169,93 @@ parser.add_argument (
     nargs='+'
 )
 
+parser.add_argument (
+    '--size',
+    type=int,
+    default= [96, 96],
+    nargs='+'
+)
+
+parser.add_argument (
+    '--model',
+    default='UNet',
+    choices=['UNet', 'FusionNetLstm', "FusionNet", "UNetLstm"]
+)
+
+parser.add_argument (
+    "--reward",
+    default="normal",
+    choices=["normal", "gaussian", "density"]
+)
+
+parser.add_argument (
+    "--use-lbl",
+    action="store_true"
+)
+
 def setup_env_conf (args):
 
     env_conf = {
         "T": args.max_episode_length,
-        "size": [48, 48],
-        "num_segs": 40,
-        "radius": args.radius
+        "size": args.size,
+        "num_segs": 12,
+        "radius": args.radius,
+        "speed": args.speed,
+        "reward": args.reward,
+        "use_lbl": args.use_lbl,
     }
     env_conf ["observation_shape"] = [env_conf ["T"] + 1] + env_conf ["size"]
+
+    if "Lstm" in args.model:
+        args.env += "_lstm"
+    if args.use_lbl:
+        args.env += "_lbl"
+        env_conf ["observation_shape"][0] = 2
+    args.env += "_" + args.reward
     args.log_dir += args.env + "/"
 
     return env_conf
+
+def get_cell_prob (lbl, dilation, erosion):
+    ESP = 1e-5
+    elevation_map = []
+    for img in lbl:
+        elevation_map += [sobel (img)]
+    elevation_map = np.array (elevation_map)
+    elevation_map = elevation_map > ESP
+    cell_prob = ((lbl > 0) ^ elevation_map) & (lbl > 0)
+    for i in range (len (cell_prob)):
+        for j in range (erosion):
+            cell_prob [i] = binary_erosion (cell_prob [i])
+    for i in range (len (cell_prob)):
+        for j in range (dilation):
+            cell_prob [i] = binary_dilation (cell_prob [i])
+    return np.array (cell_prob, dtype=np.uint8) * 255
+
+def get_data (path, args):
+    train_path = natsorted (glob.glob(path + 'A/*.tif'))
+    train_label_path = natsorted (glob.glob(path + 'B/*.tif'))
+    X_train = read_im (train_path)
+    y_train = read_im (train_label_path)
+
+    if (len (X_train) > 0):
+        X_train = X_train [0]
+    if (len (y_train) > 0):
+        y_train = y_train [0]
+        gt_prob = get_cell_prob (y_train, 0, 0)
+        y_train = []
+        for img in gt_prob:
+            y_train += [label (img).astype (np.int32)]
+        y_train = np.array (y_train)
+    else:
+        y_train = np.zeros_like (X_train)
+    return X_train, y_train
+ 
+def setup_data (env_conf):
+    raw , gt_lbl = get_data (path='Data/train/', args=None)
+    raw = raw 
+    gt_lbl = gt_lbl
+    return raw, gt_lbl
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -188,10 +269,16 @@ if __name__ == '__main__':
     env_conf = setup_env_conf (args)
 
     if "EM_env" in args.env:
-        raw, lbl, prob, gt_lbl = setup_data (env_conf)
-        raw_test, lbl_test, prob_test, gt_lbl_test = setup_data_test (env_conf)
+        raw, gt_lbl = setup_data (env_conf)
 
-    shared_model = UNet (env_conf ["observation_shape"][0], args.features, 2)
+    if (args.model == 'UNet'):
+        shared_model = UNet (env_conf ["observation_shape"][0], args.features, 2)
+    elif (args.model == "FusionNetLstm"):
+        shared_model = FusionNetLstm (env_conf ["observation_shape"], args.features, 2, args.hidden_feat)
+    elif (args.model == "FusionNet"):
+        shared_model = FusionNet (env_conf ["observation_shape"][0], args.features, 2)
+    elif (args.model == "UNetLstm"):
+        shared_model = UNetLstm (env_conf ["observation_shape"], args.features, 2, args.hidden_feat)
 
     if args.load:
         saved_state = torch.load(
@@ -212,30 +299,30 @@ if __name__ == '__main__':
 
     processes = []
     if "EM_env" in args.env:
-        p = mp.Process(target=test, args=(args, shared_model, env_conf, [raw, lbl, prob, gt_lbl], True))
+        p = mp.Process(target=test, args=(args, shared_model, env_conf, [raw, gt_lbl], True))
     else:
         p = mp.Process(target=test, args=(args, shared_model, env_conf))
     p.start()
     processes.append(p)
-    time.sleep(1)
+    time.sleep(0.1)
 
-    if "EM_env" in args.env:
-        p = mp.Process(target=test, args=(args, shared_model, env_conf, 
-            [raw_test, lbl_test, prob_test, gt_lbl_test], False))
-        p.start()
-        processes.append(p)
-        time.sleep(1)
+    # if "EM_env" in args.env:
+    #     p = mp.Process(target=test, args=(args, shared_model, env_conf, 
+    #         [raw_test, lbl_test, prob_test, gt_lbl_test], False))
+    #     p.start()
+    #     processes.append(p)
+    #     time.sleep(1)
 
     for rank in range(0, args.workers):
         if "EM_env" in args.env:
             p = mp.Process(
-                target=train, args=(rank, args, shared_model, optimizer, env_conf, [raw, lbl, prob, gt_lbl]))
+                target=train, args=(rank, args, shared_model, optimizer, env_conf, [raw, gt_lbl]))
         else:
              p = mp.Process(
                 target=train, args=(rank, args, shared_model, optimizer, env_conf))
         p.start()
         processes.append(p)
-        time.sleep(1)
+        time.sleep(0.1)
 
     for p in processes:
         time.sleep(0.1)

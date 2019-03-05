@@ -26,8 +26,13 @@ def setup_env_conf ():
         "T": 3,
         "size": [96, 96],
         "env_gpu": 0,
-        "num_segs": 3,
-        "radius": 7,
+        "num_segs": 12,
+        "radius": 22,
+        "speed": 2,
+        # "reward": "gaussian",
+        # "reward": "normal",
+        "reward": "density",
+        "use_lbl": True
     }
     return env_conf
 
@@ -53,7 +58,7 @@ plt.show ()
 # model = setup_rl_model (env, env_config)
 
 sum_score = 0
-partition = 3
+partition = 2
 
 while not done:
 
@@ -80,12 +85,12 @@ while not done:
     for c in range (len (obs)):
         tmp += [obs [c]]
     tmp = np.concatenate (tmp, 1)
-    print ("reward:", reward.shape)
-    print ("done: ", done)
+    # print ("reward:", reward.shape)
+    # print ("done: ", done)
     plt.imshow (tmp, cmap='gray')
     plt.show ()
-    # plt.imshow (reward, cmap='gray')
-    # plt.show ()
+    plt.imshow (reward, cmap='gray')
+    plt.show ()
     # plt.imshow (env.render ())
     # plt.show ()
     sum_score += reward
@@ -95,6 +100,5 @@ while not done:
     # print ('reward: ', reward)
 plt.imshow (env.sum_reward)
 plt.show ()
-
 plt.imshow (env.render ())
 plt.show ()

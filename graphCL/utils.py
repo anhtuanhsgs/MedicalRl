@@ -5,7 +5,7 @@ import json
 import logging
 import math as m
 from torch.autograd import Variable
-
+from scipy import ndimage as ndi
 
 
 def setup_logger(logger_name, log_file, level=logging.INFO):
@@ -21,6 +21,18 @@ def setup_logger(logger_name, log_file, level=logging.INFO):
     l.addHandler(streamHandler)
 
 def build_blend_weight (shape):
+    # print ("patch shape = ", shape)
+    yy, xx = np.meshgrid (
+            np.linspace(-1,1,shape[0], dtype=np.float32),
+            np.linspace(-1,1,shape[1], dtype=np.float32)
+        )
+    d = np.sqrt(xx*xx+yy*yy)
+    sigma, mu = 0.5, 0.0
+    v_weight = 1e-6+np.exp(-( (d-mu)**2 / ( 2.0 * sigma**2 ) ) )
+    v_weight = v_weight/v_weight.max()
+    return v_weight
+
+def guassian_weight_map (shape):
     # print ("patch shape = ", shape)
     yy, xx = np.meshgrid (
             np.linspace(-1,1,shape[0], dtype=np.float32),
@@ -54,6 +66,24 @@ def ensure_shared_grads(model, shared_model, gpu=False):
         else:
             shared_param._grad = param.grad.cpu()
 
+def density_map (lbl):
+    distance = ndi.distance_transform_edt(lbl)
+    idx_list = np.unique (lbl)
+    distance = distance + 1.5 * np.std (distance)
+    
+    max_dist = np.max (distance)
+    local_peak_dist_list = []
+    ret = np.zeros (lbl.shape, dtype=np.float32)
+    for i in idx_list:
+        if i == 0:
+            continue
+        local_dist_map = distance * (lbl == i)
+        local_peak_dist = np.max (local_dist_map)
+        local_peak_dist_list.append (local_peak_dist)
+        ret += local_dist_map * (max_dist / local_peak_dist)
+    ret = ret / np.max (ret)
+    ret = np.clip (ret, 0.33, 1.0)
+    return ret
 
 def weights_init(m):
     classname = m.__class__.__name__
